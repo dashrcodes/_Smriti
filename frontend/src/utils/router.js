@@ -36,14 +36,9 @@ const SmritiRouter = {
 
       // 2. Already authenticated user visiting /auth
       if (user && isAuthPage) {
-        console.log('[Router] Already authenticated. Routing to authorized space:', user.role);
-        if (user.role === 'elderly_user') {
-          window.location.href = '/senior-space';
-        } else if (user.role === 'medical_specialist' || user.role === 'healthcare_worker') {
-          window.location.href = '/specialist-dashboard';
-        } else if (user.role === 'caretaker') {
-          window.location.href = '/caretaker-studio';
-        }
+        const targetRole = user.role || localStorage.getItem('smriti_intended_role') || 'elderly_user';
+        console.log('[Router] Already authenticated. Routing to authorized space:', targetRole);
+        this.navigateToRole(targetRole);
         return;
       }
 
@@ -71,14 +66,13 @@ const SmritiRouter = {
   },
 
   navigateToRole(role) {
-    if (role === 'elderly_user') {
-      window.location.href = '/senior-space';
-    } else if (role === 'medical_specialist' || role === 'healthcare_worker') {
-      window.location.href = '/specialist-dashboard';
-    } else if (role === 'caretaker') {
+    const targetRole = role || localStorage.getItem('smriti_intended_role') || 'elderly_user';
+    if (targetRole === 'caretaker') {
       window.location.href = '/caretaker-studio';
+    } else if (targetRole === 'medical_specialist' || targetRole === 'healthcare_worker') {
+      window.location.href = '/specialist-dashboard';
     } else {
-      window.location.href = '/';
+      window.location.href = '/senior-space';
     }
   }
 };

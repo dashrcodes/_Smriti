@@ -359,9 +359,10 @@
           }
           if (window.smritiAudio) window.smritiAudio.playSuccessChord();
 
-          console.log('[AUTH_DIAGNOSTIC] stage=REDIRECT_EXECUTED target_role=' + user.role);
+          const targetRole = user.role || role;
+          console.log('[AUTH_DIAGNOSTIC] stage=REDIRECT_EXECUTED target_role=' + targetRole);
           setTimeout(() => {
-            window.SmritiRouter.navigateToRole(user.role);
+            window.SmritiRouter.navigateToRole(targetRole);
           }, 400);
         } catch (err) {
           loadingSpinner.classList.add('hidden');

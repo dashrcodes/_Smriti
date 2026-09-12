@@ -991,7 +991,7 @@
   <!-- ROLE SELECTION MODAL                                                      -->
   <!-- ========================================================================= -->
   <div id="role-modal-overlay" class="fixed inset-0 z-50 bg-[#0F172A]/75 backdrop-blur-md hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="role-modal-title">
-    <div class="relative w-full max-w-2xl bg-[var(--bg-card)] rounded-3xl p-6 sm:p-10 shadow-2xl border border-[var(--border-subtle)]">
+    <div class="relative w-full max-w-4xl bg-[var(--bg-card)] rounded-3xl p-6 sm:p-10 shadow-2xl border border-[var(--border-subtle)]">
       
       <button id="close-modal-btn" class="absolute top-5 right-5 p-2 rounded-full text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors" aria-label="Close dialog">
         <i data-lucide="x" class="w-5 h-5"></i>
@@ -1008,9 +1008,9 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 pt-2">
           <!-- Elderly User -->
-          <button class="role-select-btn p-6 rounded-3xl bg-amber-500/10 border-2 border-amber-400/40 hover:border-amber-500 text-left flex flex-col justify-between min-h-[220px] transition-all hover:scale-[1.02] group shadow-sm" data-role="elderly">
+          <button class="role-select-btn p-6 rounded-3xl bg-amber-500/10 border-2 border-amber-400/40 hover:border-amber-500 text-left flex flex-col justify-between min-h-[230px] transition-all hover:scale-[1.02] group shadow-sm" data-role="elderly">
             <div>
               <div class="w-12 h-12 rounded-2xl bg-amber-400 text-[#0F172A] flex items-center justify-center text-xl shadow-sm mb-4">
                 <i data-lucide="heart" class="w-6 h-6"></i>
@@ -1028,13 +1028,13 @@
           </button>
 
           <!-- Caretaker -->
-          <button class="role-select-btn p-6 rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] hover:border-amber-500 text-left flex flex-col justify-between min-h-[220px] transition-all hover:scale-[1.02] group shadow-sm" data-role="caretaker">
+          <button class="role-select-btn p-6 rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] hover:border-amber-500 text-left flex flex-col justify-between min-h-[230px] transition-all hover:scale-[1.02] group shadow-sm" data-role="caretaker">
             <div>
               <div class="w-12 h-12 rounded-2xl bg-slate-900 text-amber-300 flex items-center justify-center text-xl shadow-sm mb-4">
                 <i data-lucide="user-check" class="w-6 h-6"></i>
               </div>
               <span class="text-[10px] uppercase font-bold tracking-wider text-[var(--text-secondary)]">For Family & Caregivers</span>
-              <h4 class="text-lg font-bold text-[var(--text-primary)] mt-1">CARETAKER</h4>
+              <h4 class="text-lg font-bold text-[var(--text-primary)] mt-1">FAMILY & CARETAKER</h4>
               <p class="text-xs text-[var(--text-secondary)] mt-2 leading-relaxed">
                 Add photographs, music, names, routines and meaningful moments.
               </p>
@@ -1044,9 +1044,27 @@
               <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
             </div>
           </button>
+
+          <!-- Medical Specialist -->
+          <button class="role-select-btn p-6 rounded-3xl bg-emerald-500/10 border-2 border-emerald-400/40 hover:border-emerald-500 text-left flex flex-col justify-between min-h-[230px] transition-all hover:scale-[1.02] group shadow-sm" data-role="specialist">
+            <div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-700 text-white flex items-center justify-center text-xl shadow-sm mb-4">
+                <i data-lucide="activity" class="w-6 h-6"></i>
+              </div>
+              <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-800 dark:text-emerald-300">For Doctors & Clinicians</span>
+              <h4 class="text-lg font-bold text-[var(--text-primary)] mt-1">MEDICAL SPECIALIST</h4>
+              <p class="text-xs text-[var(--text-secondary)] mt-2 leading-relaxed">
+                Monitor adherence, audit records, review symptom reports & cognitive trends.
+              </p>
+            </div>
+            <div class="pt-4 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300 border-t border-emerald-500/20 mt-4">
+              <span>Open Clinical Portal</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+            </div>
+          </button>
         </div>
 
-        <div class="text-center">
+        <div class="text-center pt-2">
           <p class="text-[11px] text-[var(--text-tertiary)] flex items-center justify-center gap-1.5">
             <i data-lucide="shield" class="w-3.5 h-3.5 text-amber-500"></i>
             <span>Safe & Private • Powered by Smart India Hackathon 2026 Architecture</span>

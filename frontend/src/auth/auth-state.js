@@ -98,9 +98,9 @@ class AuthStateManager {
       if (window.ApiClient) {
         await window.ApiClient.logout();
       }
-      if (window.SmritiFirebase?.auth) {
+      if (window.SmritiFirebase?.auth && window.SmritiFirebase?.signOut) {
         try {
-          await window.SmritiFirebase.auth.signOut();
+          await window.SmritiFirebase.signOut(window.SmritiFirebase.auth);
         } catch (e) {}
       }
     } catch (err) {
@@ -108,6 +108,11 @@ class AuthStateManager {
     } finally {
       this.user = null;
       if (window.ApiClient) window.ApiClient.clearSession();
+      localStorage.removeItem('smriti_intended_role');
+      localStorage.removeItem('smriti_active_elderly');
+      try {
+        sessionStorage.clear();
+      } catch (e) {}
       this.loading = false;
       this.notify();
     }

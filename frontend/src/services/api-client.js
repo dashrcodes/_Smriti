@@ -20,6 +20,11 @@ const ApiClient = {
   clearSession() {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem('smriti_intended_role');
+    localStorage.removeItem('smriti_active_elderly');
+    try {
+      sessionStorage.clear();
+    } catch (e) {}
   },
 
   getStoredUser() {
