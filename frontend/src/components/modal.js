@@ -72,14 +72,27 @@ class RoleModalManager {
       window.smritiAudio.playSuccessChord();
     }
 
-    const targetRole = role === 'elderly' ? 'elderly_user' : 'caretaker';
+    let targetRole = 'caretaker';
+    if (role === 'elderly' || role === 'elderly_user') {
+      targetRole = 'elderly_user';
+    } else if (role === 'healthcare_worker') {
+      targetRole = 'healthcare_worker';
+    } else if (role === 'medical_specialist' || role === 'specialist') {
+      targetRole = 'medical_specialist';
+    } else if (role === 'caretaker') {
+      targetRole = 'caretaker';
+    }
     
     // If already authenticated and matches role, route immediately to dashboard
     const currentAuth = window.smritiAuth;
     if (currentAuth && currentAuth.isAuthenticated()) {
       const userRole = currentAuth.getUserRole();
-      if (userRole === targetRole) {
-        window.location.href = targetRole === 'elderly_user' ? '/senior-space' : '/caretaker-studio';
+      if (userRole === targetRole || ((targetRole === 'healthcare_worker' || targetRole === 'medical_specialist') && (userRole === 'healthcare_worker' || userRole === 'medical_specialist'))) {
+        if (window.SmritiRouter) {
+          window.SmritiRouter.navigateToRole(userRole);
+        } else {
+          window.location.href = targetRole === 'elderly_user' ? '/senior-space' : (targetRole === 'caretaker' ? '/caretaker-studio' : '/specialist-dashboard');
+        }
         return;
       }
     }
