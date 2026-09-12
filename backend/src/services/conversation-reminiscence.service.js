@@ -1,10 +1,13 @@
 /**
- * SMRITI AI CONVERSATION & REMINISCENCE COMPANION SERVICE
+ * SMRITI REAL GEMINI AI CONVERSATION & REMINISCENCE COMPANION SERVICE
  * Powers the interactive "Talk & Recall" voice reminiscence companion.
+ * Uses official Google @google/genai SDK for real, multi-turn, personalized AI conversations.
  * Integrates real family members, daily routines, photo memories, and cultural anchors.
  * Provides warm, slow-paced, empathetic, non-judgmental conversational flow for elderly seniors.
  */
 
+import { GoogleGenAI } from '@google/genai';
+import { config } from '../config/env.js';
 import { familyService } from './family-service.js';
 import { routineService } from './routine-service.js';
 import { profileService } from './profile-service.js';
@@ -13,6 +16,38 @@ import { relationshipService } from './relationship-service.js';
 import { userService } from './user-service.js';
 import { logger } from '../utils/logger.js';
 
+let genAIClient = null;
+
+function getGeminiClient() {
+  const apiKey = config.gemini?.apiKey || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not configured on the server');
+  }
+  if (!genAIClient) {
+    genAIClient = new GoogleGenAI({ apiKey });
+  }
+  return genAIClient;
+}
+
+const CANDIDATE_MODELS = [
+  process.env.GEMINI_MODEL,
+  config.gemini?.model,
+  'gemini-3-flash-preview',
+  'gemini-3.5-flash',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-3.6-flash',
+  'gemini-3.8-flash',
+  'gemini-flash-lite-latest'
+].filter((m, idx, arr) => m && typeof m === 'string' && arr.indexOf(m) === idx);
+
+/**
+ * Resolves respectful title and styled name for the senior.
+ * Rules:
+ * - Male -> "[Name] Baba"
+ * - Female -> "[Name] Maa"
+ * - Never "Baba [Name]" or "Maa [Name]"
+ * - Never infer gender from name alone. If unknown, use clean neutral name.
+ */
 function resolveSeniorStyledName(user, profile) {
   let realName = '';
   if (user?.name && user.name !== 'Smriti User' && user.name !== 'Elderly User') {
@@ -40,9 +75,171 @@ function resolveSeniorStyledName(user, profile) {
   return styledName.trim();
 }
 
+/**
+ * Builds server-side system instruction for Gemini grounding the conversation in Smriti's verified records.
+ */
+function buildGeminiSystemInstruction({ seniorName, user, profile, family = [], routines = [], memories = [], language = 'as' }) {
+  const gender = (profile?.gender || user?.gender || '').toLowerCase().trim();
+  const titleRule = gender === 'male'
+    ? `Always address them respectfully as "${seniorName}". Never say "Baba [Name]", always say "[Name] Baba".`
+    : gender === 'female'
+      ? `Always address them respectfully as "${seniorName}". Never say "Maa [Name]", always say "[Name] Maa".`
+      : `Address them warmly and respectfully as "${seniorName}".`;
+
+  const cleanFamily = family.map(f => ({
+    name: f.name,
+    relationship: f.relationship || 'Family',
+    location: f.location || undefined,
+    isFavorite: Boolean(f.isFavorite),
+    personalContext: f.personalContext || f.shortDescription || undefined
+  }));
+
+  const cleanRoutines = routines.map(r => ({
+    activityName: r.activityName,
+    time: r.timeOfDay || r.time || undefined
+  }));
+
+  const cleanMemories = memories.slice(0, 10).map(m => ({
+    title: m.title || 'Family Memory',
+    description: m.description || undefined,
+    type: m.type || 'photo'
+  }));
+
+  const languageLabels = {
+    as: 'Assamese (অসমীয়া)',
+    hi: 'Hindi (हिंदी)',
+    bn: 'Bengali (বাংলা)',
+    en: 'English'
+  };
+  const targetLangName = languageLabels[language] || 'the senior\'s preferred language';
+
+  return `You are Smriti, a warm, patient, and deeply respectful reminiscence companion for elderly seniors.
+You are conversing with ${seniorName}.
+${titleRule}
+
+VERIFIED BACKGROUND RECORDS FOR ${seniorName}:
+- Family Members: ${JSON.stringify(cleanFamily)}
+- Daily Routines: ${JSON.stringify(cleanRoutines)}
+- Stored Memory Photos: ${JSON.stringify(cleanMemories)}
+
+CORE CONVERSATIONAL BEHAVIORS:
+1. Warmth & Pace: Speak like a caring, patient human companion, NOT a generic AI chatbot. Never say "How can I help you today?", "As an AI...", or give clinical advice.
+2. Simplicity: Use short, simple, comforting sentences (2 to 3 sentences maximum). Avoid big words, long paragraphs, complex grammar, or bulleted lists.
+3. Reminiscence: Ask at most ONE meaningful, open-ended follow-up question per turn to gently encourage the senior to share their memories.
+4. Active Continuity: Maintain conversational continuity. Always connect your response to what the senior just said and remember context from previous turns (e.g. references like "there", "with him", "that place", "the food").
+5. Strict Grounding: NEVER invent family members, trips, or memories that are not in the verified records. If the senior mentions an event or person not in the records (such as a trip to Puri or an old friend), acknowledge it warmly and ask them to share more about it. Never claim you remember an unrecorded event.
+6. Language: Respond naturally and fluently in ${targetLangName}. If the senior speaks in another language or mixes languages, match their language warmly while keeping sentences clear and easy for an elderly ear.
+7. Output Format: You MUST output a JSON object matching this schema:
+   {
+     "replyText": string (the warm response to be spoken aloud to the senior),
+     "suggestedReplies": array of 2 to 3 short phrases (in the same language) that the senior can easily tap or say next
+   }`;
+}
+
+/**
+ * Formats conversation history into bounded multi-turn contents for @google/genai
+ */
+function formatConversationContents(conversationHistory, currentMessage) {
+  const boundedHistory = (Array.isArray(conversationHistory) ? conversationHistory : []).slice(-10);
+  const contents = [];
+
+  for (const turn of boundedHistory) {
+    if (!turn?.content || typeof turn.content !== 'string') continue;
+    const role = (turn.role === 'user') ? 'user' : 'model';
+    const text = turn.content.trim();
+    if (!text) continue;
+
+    if (contents.length > 0 && contents[contents.length - 1].role === role) {
+      contents[contents.length - 1].parts[0].text += `\n${text}`;
+    } else {
+      contents.push({ role, parts: [{ text }] });
+    }
+  }
+
+  const cleanCurrent = (currentMessage || '').trim();
+  if (cleanCurrent) {
+    const lastContent = contents[contents.length - 1];
+    if (!lastContent || lastContent.role !== 'user' || lastContent.parts[0].text !== cleanCurrent) {
+      if (lastContent && lastContent.role === 'user') {
+        lastContent.parts[0].text = cleanCurrent;
+      } else {
+        contents.push({ role: 'user', parts: [{ text: cleanCurrent }] });
+      }
+    }
+  }
+
+  if (contents.length === 0 && cleanCurrent) {
+    contents.push({ role: 'user', parts: [{ text: cleanCurrent }] });
+  }
+
+  return contents;
+}
+
+/**
+ * Calls Gemini with model failover and structured JSON schema
+ */
+async function callGeminiConversation({ systemInstruction, contents }) {
+  const ai = getGeminiClient();
+  let lastError = null;
+
+  for (const model of CANDIDATE_MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.7,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'OBJECT',
+              properties: {
+                replyText: { type: 'STRING' },
+                suggestedReplies: {
+                  type: 'ARRAY',
+                  items: { type: 'STRING' }
+                }
+              },
+              required: ['replyText', 'suggestedReplies']
+            }
+          }
+        });
+
+        if (!response?.text) {
+          throw new Error('Empty response received from Gemini');
+        }
+
+        const parsed = JSON.parse(response.text);
+        if (!parsed?.replyText || typeof parsed.replyText !== 'string') {
+          throw new Error('Malformed Gemini response: missing replyText');
+        }
+
+        return {
+          modelUsed: model,
+          replyText: parsed.replyText.trim(),
+          suggestedReplies: Array.isArray(parsed.suggestedReplies) ? parsed.suggestedReplies.slice(0, 3) : []
+        };
+      } catch (err) {
+        lastError = err;
+        const status = err.status || (err.message && err.message.includes('429') ? 429 : err.message && err.message.includes('503') ? 503 : null);
+        logger.warn(`Gemini model ${model} attempt ${attempt + 1} failed (${status || err.message || 'unknown error'})`);
+
+        if ((status === 429 || status === 503) && attempt === 0) {
+          await new Promise(r => setTimeout(r, 1200));
+        } else {
+          break; // proceed to next candidate model
+        }
+      }
+    }
+  }
+
+  throw new Error(`Gemini conversation generation failed: ${lastError?.status || lastError?.message || 'All models unavailable'}`);
+}
+
 export const conversationReminiscenceService = {
   /**
-   * Generates a personalized opening reminiscence prompt for an elderly user
+   * Generates a personalized opening reminiscence prompt for an elderly user using Gemini
    */
   async getOpeningPrompt(elderlyUserId, callerId, language = 'as') {
     if (callerId !== elderlyUserId) {
@@ -64,79 +261,74 @@ export const conversationReminiscenceService = {
     // Pick top personalized anchors
     const favFamily = family.find(f => f.isFavorite) || family[0];
     const morningRoutine = routines.find(r => r.order === 1 || /tea|walk|morning/i.test(r.activityName)) || routines[0];
-    const topMemory = memories.find(m => m.type === 'photo');
 
-    let promptText = '';
-    let suggestedReplies = [];
+    const systemInstruction = buildGeminiSystemInstruction({
+      seniorName,
+      user,
+      profile,
+      family,
+      routines,
+      memories,
+      language: lang
+    });
 
-    if (lang === 'as') {
-      if (favFamily && morningRoutine) {
-        promptText = `নমস্কাৰ ${seniorName}! আজিৰ দিনটো কেনে লাগিছে? আপোনাৰ ${morningRoutine.activityName} বা ${favFamily.name} (${favFamily.relationship || 'পৰিয়াল'}) ৰ কথা মনত পৰিছে নেকি? মোক কওকচোন!`;
-        suggestedReplies = [
-          `মই ভালে আছোঁ`,
-          `${favFamily.name}ৰ কথা কওঁ`,
-          `${morningRoutine.activityName}ৰ বিষয়ে কওঁ`
-        ];
-      } else if (favFamily) {
-        promptText = `নমস্কাৰ ${seniorName}! ${favFamily.name} (${favFamily.relationship || 'পৰিয়াল'}) ৰ লগত কটোৱা কোনো ভাল স্মৃতি মনত পেলাওকচোন। আপোনাৰ কি মনত পৰিছে?`;
-        suggestedReplies = [`${favFamily.name}ৰ কথা কওঁ`, `মই আজি ভাল অনুভৱ কৰিছোঁ`];
-      } else {
+    const openingContents = [
+      {
+        role: 'user',
+        parts: [{
+          text: `Please generate a warm, loving opening greeting and one gentle opening reminiscence question for ${seniorName} to start our conversation today. Mention their morning routine (${morningRoutine?.activityName || 'morning tea'}) or their family member (${favFamily?.name || 'family'}) if appropriate. Output JSON with "replyText" (the opening prompt) and "suggestedReplies" (array of 2 to 3 short starter replies).`
+        }]
+      }
+    ];
+
+    try {
+      const geminiRes = await callGeminiConversation({
+        systemInstruction,
+        contents: openingContents
+      });
+
+      return {
+        success: true,
+        promptText: geminiRes.replyText,
+        suggestedReplies: geminiRes.suggestedReplies,
+        language: lang,
+        seniorName,
+        favFamily: favFamily ? { name: favFamily.name, relationship: favFamily.relationship, avatar: favFamily.avatar, avatarUrl: favFamily.avatarUrl } : null
+      };
+    } catch (err) {
+      logger.warn('Gemini opening prompt generation failed, returning warm anchored prompt', { message: err?.message });
+      // Safe localized fallback greeting if Gemini is temporarily unreachable during page load
+      let promptText = '';
+      let suggestedReplies = [];
+      if (lang === 'as') {
         promptText = `নমস্কাৰ ${seniorName}! আজি আপোনাৰ কেনে লাগিছে? চাহ খাই ভাল লাগিলনে নাইবা কোনো পুৰণি গান মনত পৰিছে নেকি?`;
         suggestedReplies = [`মই চাহ খালোঁ`, `পুৰণি কথা কওঁ`, `মনটো ভাল লাগিছে`];
-      }
-    } else if (lang === 'hi') {
-      if (favFamily && morningRoutine) {
-        promptText = `नमस्ते ${seniorName} जी! आज का दिन कैसा बीत रहा है? क्या आपको ${morningRoutine.activityName} या ${favFamily.name} (${favFamily.relationship || 'परिवार'}) की कोई प्यारी बात याद आ रही है? मुझे बताइए!`;
-        suggestedReplies = [
-          `मैं बहुत अच्छा महसूस कर रहा हूँ`,
-          `${favFamily.name} के बारे में बात करते हैं`,
-          `${morningRoutine.activityName} की बात`
-        ];
-      } else if (favFamily) {
-        promptText = `नमस्ते ${seniorName} जी! ${favFamily.name} (${favFamily.relationship || 'परिवार'}) के साथ बिताया कोई खास पल याद करें। आज आप क्या कहना चाहते हैं?`;
-        suggestedReplies = [`${favFamily.name} की यादें`, `आज का दिन अच्छा है`];
-      } else {
-        promptText = `नमस्ते ${seniorName} जी! आज आपका मन कैसा है? क्या आपने सुबह की चाय पी? अपनी कोई मीठी याद मुझसे साझा करें।`;
+      } else if (lang === 'hi') {
+        promptText = `नमस्ते ${seniorName}! आज आपका मन कैसा है? क्या आपने सुबह की चाय पी? अपनी कोई मीठी याद मुझसे साझा करें।`;
         suggestedReplies = [`सुबह की चाय पी ली`, `पुरानी यादें बताएं`, `अच्छा महसूस हो रहा है`];
-      }
-    } else if (lang === 'bn') {
-      if (favFamily) {
-        promptText = `নমস্কার ${seniorName}! কেমন আছেন আজ? ${favFamily.name} (${favFamily.relationship || 'পরিবার'}) এর সাথে কাটানো সুন্দর স্মৃতির কথা মনে পড়ছে কি? আমাকে বলুন!`;
-        suggestedReplies = [`আমি ভালো আছি`, `${favFamily.name}র কথা বলি`, `চায়ের কথা বলি`];
-      } else {
+      } else if (lang === 'bn') {
         promptText = `নমস্কার ${seniorName}! আজ আপনার দিনটি কেমন যাচ্ছে? কোনো প্রিয় গান বা সুন্দর স্মৃতির কথা মনে পড়ছে কি?`;
         suggestedReplies = [`খুব ভালো লাগছে`, `পুরোনো কথা বলি`];
-      }
-    } else {
-      // English default
-      if (favFamily && morningRoutine) {
-        promptText = `Hello ${seniorName}! It is so wonderful to talk with you. Are you thinking about your ${morningRoutine.activityName}, or perhaps ${favFamily.name} (${favFamily.relationship || 'Family'})? Tell me what is on your heart today.`;
-        suggestedReplies = [
-          `I am feeling good today`,
-          `Tell me about ${favFamily.name}`,
-          `Let's talk about ${morningRoutine.activityName}`
-        ];
-      } else if (favFamily) {
-        promptText = `Hello ${seniorName}! Thinking of ${favFamily.name} (${favFamily.relationship || 'Family'})? Share a fond memory you cherish with them.`;
-        suggestedReplies = [`Thinking of ${favFamily.name}`, `Having a peaceful day`];
       } else {
-        promptText = `Hello ${seniorName}! It is wonderful to hear your voice. How are you feeling today? Share whatever comes to your mind.`;
+        promptText = `Hello ${seniorName}! It is wonderful to hear your voice today. How are you feeling? Share whatever comes to your mind.`;
         suggestedReplies = [`Feeling peaceful today`, `Tell me a pleasant story`, `Let's chat`];
       }
-    }
 
-    return {
-      success: true,
-      promptText,
-      suggestedReplies,
-      language: lang,
-      seniorName,
-      favFamily: favFamily ? { name: favFamily.name, relationship: favFamily.relationship, avatar: favFamily.avatar, avatarUrl: favFamily.avatarUrl } : null
-    };
+      return {
+        success: true,
+        promptText,
+        suggestedReplies,
+        language: lang,
+        seniorName,
+        favFamily: favFamily ? { name: favFamily.name, relationship: favFamily.relationship, avatar: favFamily.avatar, avatarUrl: favFamily.avatarUrl } : null
+      };
+    }
   },
 
   /**
-   * Processes an incoming message from the senior during the Talk & Recall session
+   * Processes an incoming message from the senior during the Talk & Recall session.
+   * Generates response using real Gemini AI.
+   * Under no circumstances generates fake responses if Gemini fails.
    */
   async processUserMessage({ elderlyUserId, callerId, userMessage, conversationHistory = [], language = 'as' }) {
     if (!userMessage || typeof userMessage !== 'string') {
@@ -158,94 +350,32 @@ export const conversationReminiscenceService = {
 
     const seniorName = resolveSeniorStyledName(user, profile);
     const lang = language || profile?.preferredLanguage || 'as';
-    const textLower = userMessage.toLowerCase();
 
-    // Check if user mentioned any registered family member
-    const matchedFamily = family.find(f => textLower.includes(f.name.toLowerCase()) || (f.relationship && textLower.includes(f.relationship.toLowerCase())));
+    const systemInstruction = buildGeminiSystemInstruction({
+      seniorName,
+      user,
+      profile,
+      family,
+      routines,
+      memories,
+      language: lang
+    });
 
-    // Check if user mentioned any routine
-    const matchedRoutine = routines.find(r => textLower.includes(r.activityName.toLowerCase()));
+    const contents = formatConversationContents(conversationHistory, userMessage);
 
-    // Sentiment / intent heuristics
-    const isHappy = /ভাল|ভালপোৱা|আনন্দ|happy|good|great|nice|love|peace|সুখী|खुश|अच्छा|बढ़िया|प्यार|সুখে/i.test(textLower);
-    const isTea = /চাহ|tea|chai|চা|কফি|coffee/i.test(textLower);
-    const isWalk = /walk|খোজ|ফুৰা|টহল|घूमना|सैर|garden|বাগান|উদ্যন/i.test(textLower);
-    const isMusic = /গান|song|music|গীত|সঙ্গীত|সুর|धुन/i.test(textLower);
-    const isTired = /ভাগৰ|tired|pain|দুখ|थकान|उदास|কষ্ট/i.test(textLower);
-
-    let replyText = '';
-    let suggestedReplies = [];
-
-    if (lang === 'as') {
-      if (isTired) {
-        replyText = `মই বুজিছোঁ ${seniorName}। আপুনি অলপ আৰাম কৰক আৰু গভীৰ উশাহ লওক। আপোনাৰ পৰিয়াল সদায় আপোনাৰ কাষতেই আছে। মন শান্ত কৰিবলৈ অলপ মিঠা স্মৃতি মনত পেলাওঁ নেকি?`;
-        suggestedReplies = [`অলপ শান্ত সংগীত শুনো`, `পুৰণি কথা পাতিম`];
-      } else if (matchedFamily) {
-        const memNotes = matchedFamily.personalContext || matchedFamily.shortDescription || '';
-        const loc = matchedFamily.location ? ` (${matchedFamily.location})` : '';
-        replyText = `কিমান ভাল লগা কথা! ${matchedFamily.name} (${matchedFamily.relationship || 'পৰিয়াল'})${loc} আপোনাৰ অতি মৰমৰ। ${memNotes ? `তেওঁৰ লগত '${memNotes}' কথা মনত পৰে নেকি?` : 'তেওঁৰ লগত থকা মৰমৰ স্মৃতিবোৰে সদায় মন আনন্দিত কৰে।'}`;
-        suggestedReplies = [`হয়, খুব মনত পৰে`, `আৰু এটা কথা কওঁ`, `চাহৰ কথা পাতিম`];
-      } else if (isTea) {
-        replyText = `অসমৰ সুবাসভৰা পুৱাৰ চাহ খোৱাটো এক অপূৰ্ব আনন্দ! চাহৰ কাপ হাতত লৈ পুৱাৰ ৰ'দজাক উপভোগ কৰা স্মৃতি কিমান সুন্দৰ, নহয় জানো?`;
-        suggestedReplies = [`হয়, চাহ খাই বৰ ভাল লাগে`, `পৰিয়ালৰ কথা কওঁ`];
-      } else if (isWalk) {
-        replyText = `খোজ কাঢ়িলে মন আৰু দেহ দুয়োটাই সতেজ হৈ পৰে। নদীৰ পাৰত বা সেউজীয়া বাগানত খোজ কঢ়া স্মৃতিবোৰ বৰ মনোৰম।`;
-        suggestedReplies = [`বাগানৰ কথা কওঁ`, `চাহৰ কথা কওঁ`];
-      } else if (isMusic) {
-        replyText = `গান আৰু সুৰ মনৰ ঔষধৰ দৰে। ভূপেন হাজৰিকাদেৱ বা জ্যোতিপ্ৰসাদৰ মিঠা গীতে আমাৰ মন প্ৰশান্ত কৰে।`;
-        suggestedReplies = [`এটা গান শুনাওক`, `মন শান্ত লাগিছে`];
-      } else {
-        const randomFamily = family[Math.floor(Math.random() * family.length)];
-        replyText = `আপোনাৰ কথা শুনি বৰ আনন্দ লাগিল ${seniorName}। ${randomFamily ? `${randomFamily.name} (${randomFamily.relationship || 'পৰিয়াল'}) ৰ কথাও মনত পৰিছে নেকি?` : 'আপোনাৰ স্মৃতিবোৰ শুনি থাকিবলৈ মোৰ খুব ভাল লাগে।'}`;
-        suggestedReplies = [`হয়, ভাল লাগিছে`, `আৰু এটা কথা কওঁ`];
-      }
-    } else if (lang === 'hi') {
-      if (isTired) {
-        replyText = `मैं समझ सकता हूँ ${seniorName} जी। आप थोड़ा आराम कीजिए और गहरी सांस लीजिए। आपका परिवार आपके साथ है। क्या हम कोई मीठी और शांत याद ताजा करें?`;
-        suggestedReplies = [`शांत संगीत सुनते हैं`, `पुरानी बातें करते हैं`];
-      } else if (matchedFamily) {
-        const loc = matchedFamily.location ? ` जो ${matchedFamily.location} में रहते हैं` : '';
-        replyText = `कितनी प्यारी बात है! ${matchedFamily.name} (${matchedFamily.relationship || 'परिवार'})${loc} आपसे बहुत प्यार करते हैं। उनके साथ बिताए खूबसूरत लम्हे हमेशा चेहरे पर मुस्कान लाते हैं।`;
-        suggestedReplies = [`हाँ, बहुत याद आती है`, `एक और बात बताते हैं`];
-      } else if (isTea) {
-        replyText = `सुबह की ताज़ा चाय और अपनों की बातें, दिन को कितना सुंदर बना देती हैं! चाय की चुस्की के साथ बीता कौन सा पल आपको सबसे ज्यादा पसंद है?`;
-        suggestedReplies = [`सुबह की चाय बहुत पसंद है`, `परिवार के बारे में बताएं`];
-      } else {
-        replyText = `आपकी मीठी बातें सुनकर बहुत खुशी हुई ${seniorName} जी। ऐसे ही अपने अनुभव मुझसे साझा करते रहिए।`;
-        suggestedReplies = [`अच्छा महसूस हो रहा है`, `एक और याद बताता हूँ`];
-      }
-    } else if (lang === 'bn') {
-      if (matchedFamily) {
-        replyText = `খুব সুন্দর কথা! ${matchedFamily.name} (${matchedFamily.relationship || 'পরিবার'}) আপনাকে খুব ভালোবাসেন। ওনার সাথে কাটানো সুন্দর স্মৃতিগুলো মন ভালো করে দেয়।`;
-        suggestedReplies = [`হ্যাঁ, ওনার কথা খুব মনে পড়ে`, `আরও কথা বলি`];
-      } else {
-        replyText = `আপনার কথা শুনে মন ভরে গেল ${seniorName}। আপনার সাথে কথা বলে খুব ভালো লাগছে।`;
-        suggestedReplies = [`খুব ভালো লাগছে`, `স্মৃতির কথা বলি`];
-      }
-    } else {
-      // English
-      if (isTired) {
-        replyText = `I understand completely, ${seniorName}. Take a gentle breath and relax. Your loved ones cherish you dearly. Would you like to listen to some calming melodies or share a gentle memory?`;
-        suggestedReplies = [`Let's rest for a moment`, `Tell me a pleasant story`];
-      } else if (matchedFamily) {
-        const memNotes = matchedFamily.personalContext || matchedFamily.shortDescription || '';
-        replyText = `That is wonderful to reflect on! ${matchedFamily.name} (${matchedFamily.relationship || 'Family'}) holds such a special place in your heart. ${memNotes ? `Do you remember when "${memNotes}"?` : 'Cherishing these family bonds brings so much warmth.'}`;
-        suggestedReplies = [`Yes, I remember fondly`, `Tell me more about family`];
-      } else if (isTea || isWalk) {
-        replyText = `Those moments of calm morning tea and pleasant outdoor strolls bring so much peace to the spirit. Who did you enjoy walking or having tea with most?`;
-        suggestedReplies = [`With my family`, `In our garden`];
-      } else {
-        replyText = `Thank you for sharing that with me, ${seniorName}. It is truly a joy to converse with you. What else would you like to reminisce about?`;
-        suggestedReplies = [`I feel very happy`, `Let's talk about family memories`];
-      }
-    }
+    // Call real Gemini AI
+    const geminiRes = await callGeminiConversation({
+      systemInstruction,
+      contents
+    });
 
     return {
       success: true,
-      replyText,
-      suggestedReplies,
+      replyText: geminiRes.replyText,
+      suggestedReplies: geminiRes.suggestedReplies,
       language: lang,
-      seniorName
+      seniorName,
+      modelUsed: geminiRes.modelUsed
     };
   }
 };

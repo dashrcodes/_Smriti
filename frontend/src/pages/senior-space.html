@@ -32,6 +32,8 @@
       }
     }
   </script>
+  <!-- Three.js 3D Library (r128 WebGL & WebXR Engine) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <link rel="stylesheet" href="/src/styles/styles.css" />
   
   <style>
@@ -115,8 +117,15 @@
         </div>
       </div>
 
-      <div class="text-5xl select-none hidden md:block">
-        🏡
+      <!-- VR / 3D Sanctuary Entry Trigger -->
+      <div class="flex items-center gap-4">
+        <button id="senior-enter-vr-btn" class="hidden sm:inline-flex px-5 sm:px-6 py-3.5 rounded-2xl bg-gradient-to-r from-purple-700 via-indigo-700 to-amber-600 hover:from-purple-600 hover:to-amber-500 text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-xl hover:scale-102 active:scale-98 transition-all items-center gap-2.5 border-2 border-purple-300">
+          <span class="text-xl">🥽</span>
+          <span id="senior-vr-btn-label">Explore 3D Sanctuary — Desktop Preview</span>
+        </button>
+        <div class="text-5xl select-none hidden md:block">
+          🏡
+        </div>
       </div>
     </div>
 
@@ -626,6 +635,67 @@
     </div>
   </div>
 
+  <!-- ================================================================= -->
+  <!-- FULLSCREEN VR / 3D SANCTUARY OVERLAY (Phase 1 WebXR)              -->
+  <!-- ================================================================= -->
+  <div id="smriti-vr-overlay" class="fixed inset-0 z-50 hidden bg-[#0F172A] flex flex-col justify-between overflow-hidden">
+    <!-- Top VR Header (Visible in Desktop Preview and initial transition) -->
+    <div id="vr-overlay-header" class="absolute top-0 inset-x-0 z-20 p-4 sm:p-6 flex items-center justify-between bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none">
+      <div class="flex items-center gap-3 pointer-events-auto">
+        <div class="w-11 h-11 rounded-2xl bg-purple-600 text-white flex items-center justify-center text-2xl shadow-md border border-purple-400/40">
+          🥽
+        </div>
+        <div>
+          <h2 id="vr-overlay-title" class="text-white font-extrabold text-base sm:text-lg drop-shadow">Smriti VR Memory Sanctuary</h2>
+          <p id="vr-overlay-subtitle" class="text-amber-200/90 text-xs font-semibold drop-shadow">Personalized Family & Memory Space</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pointer-events-auto">
+        <div id="vr-mode-badge" class="px-3 py-1.5 rounded-full bg-purple-950/80 text-purple-200 border border-purple-400/50 text-xs font-bold shadow-sm">
+          WebXR Immersive
+        </div>
+        <button id="vr-exit-btn" class="px-4 py-2 rounded-2xl bg-white/95 hover:bg-white text-slate-900 font-extrabold text-xs shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 border border-slate-300" title="Exit Sanctuary (Esc)">
+          <span>✕</span>
+          <span>Exit Sanctuary</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Isolated Three.js Canvas Container -->
+    <div id="smriti-vr-canvas-container" class="relative w-full h-full flex-grow"></div>
+
+    <!-- Desktop Instructions Footer (Only shown during Desktop Preview) -->
+    <div id="vr-desktop-instructions" class="absolute bottom-4 inset-x-0 z-20 hidden text-center pointer-events-none">
+      <div class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-xl">
+        <span>🖱️ Click & Drag to Look Around</span>
+        <span>•</span>
+        <span>Hover or Click any Memory, Family Member, Game, or Melody</span>
+        <span>•</span>
+        <span>Press <kbd class="px-1.5 py-0.5 rounded bg-white/20 font-mono text-[10px]">Esc</kbd> to Exit</span>
+      </div>
+    </div>
+
+    <!-- In-World VR Talk Text Fallback Modal -->
+    <div id="vr-talk-text-dialog" class="absolute bottom-16 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-30 hidden max-w-lg w-full p-4 rounded-3xl bg-slate-900/95 backdrop-blur-xl border border-rose-400/40 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-white/10">
+        <div class="flex items-center gap-2 text-rose-300 text-xs font-bold">
+          <span>💬</span>
+          <span>Type to Smriti</span>
+        </div>
+        <button id="vr-talk-text-close-btn" class="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg hover:bg-white/10" title="Close">
+          ✕
+        </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="text" id="vr-talk-text-input" placeholder="Type what is on your heart..." class="flex-grow px-4 py-3 rounded-2xl bg-black/50 border border-white/20 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-rose-400" />
+        <button id="vr-talk-text-submit-btn" class="px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-extrabold shadow-lg transition-all">
+          SEND
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
@@ -644,20 +714,164 @@
     import { voiceService } from '/src/services/voice-service.js';
     import { offlineSyncService } from '/src/services/offline-sync-service.js';
     import { cognitiveClient } from '/src/services/cognitive-client.js';
+    import { smritiVREngine, SmritiVREngine } from '/src/components/vr/vr-engine.js';
+
+    let expData = null;
+    let globalCurrentPack = null;
+    let globalElderlyUserId = null;
+
+    // Immediately run capability check and bind VR controls without blocking on backend data
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initVREntrypoint().catch(e => console.warn('[VR] Init error:', e));
+      });
+    } else {
+      initVREntrypoint().catch(e => console.warn('[VR] Init error:', e));
+    }
+
+    // 3b. VR / 3D Sanctuary Capability Detection & Setup (Phase 1 WebXR)
+    async function initVREntrypoint() {
+      const vrBtn = document.getElementById('senior-enter-vr-btn');
+      const vrLabel = document.getElementById('senior-vr-btn-label');
+      if (!vrBtn || !vrLabel) return;
+
+      let isVRSupported = false;
+      try {
+        isVRSupported = await SmritiVREngine.isWebXRImmersiveSupported();
+      } catch (e) {
+        isVRSupported = false;
+      }
+
+      const isDesktop = !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      let launchMode = null;
+
+      if (isVRSupported) {
+        launchMode = 'vr';
+        vrLabel.textContent = 'ENTER VR';
+        vrBtn.classList.remove('hidden');
+        vrBtn.classList.add('inline-flex');
+      } else if (isDesktop) {
+        launchMode = 'desktop';
+        vrLabel.textContent = 'Explore 3D Sanctuary — Desktop Preview';
+        vrBtn.classList.remove('hidden');
+        vrBtn.classList.add('inline-flex');
+      } else {
+        // Mobile without WebXR keeps normal Senior Space completely unchanged
+        vrBtn.classList.add('hidden');
+        vrBtn.classList.remove('inline-flex', 'sm:inline-flex');
+        return;
+      }
+
+      const vrOverlay = document.getElementById('smriti-vr-overlay');
+      const vrCanvasContainer = document.getElementById('smriti-vr-canvas-container');
+      const vrExitBtn = document.getElementById('vr-exit-btn');
+      const vrModeBadge = document.getElementById('vr-mode-badge');
+      const vrDesktopInstructions = document.getElementById('vr-desktop-instructions');
+
+      const closeVR = () => {
+        smritiVREngine.exit();
+        if (vrOverlay) vrOverlay.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      };
+
+      if (vrExitBtn && !vrExitBtn.dataset.bound) {
+        vrExitBtn.dataset.bound = 'true';
+        vrExitBtn.addEventListener('click', closeVR);
+      }
+
+      if (!vrBtn.dataset.bound) {
+        vrBtn.dataset.bound = 'true';
+        vrBtn.addEventListener('click', async () => {
+          if (vrOverlay) vrOverlay.classList.remove('hidden');
+          document.body.classList.add('overflow-hidden');
+
+          if (vrModeBadge) {
+            vrModeBadge.textContent = launchMode === 'vr' ? '🥽 WebXR Immersive' : '🖥️ Desktop 3D Preview';
+          }
+          if (vrDesktopInstructions) {
+            if (launchMode === 'desktop') {
+              vrDesktopInstructions.classList.remove('hidden');
+            } else {
+              vrDesktopInstructions.classList.add('hidden');
+            }
+          }
+
+          const sessionToken = window.ApiClient ? window.ApiClient.getToken() : '';
+          const activeExpData = expData || {
+            displayName: (window.smritiAuth?.getUser()?.name) || 'Elder',
+            greeting: 'Welcome to your 3D Sanctuary',
+            profile: { preferredLanguage: 'as' },
+            memories: { photos: [], audios: [] },
+            family: [],
+            routines: []
+          };
+          const lang = activeExpData?.profile?.preferredLanguage || 'as';
+
+          await smritiVREngine.start({
+            containerEl: vrCanvasContainer,
+            expData: activeExpData,
+            sessionToken,
+            mode: launchMode,
+            currentPack: globalCurrentPack,
+            elderlyUserId: globalElderlyUserId || (window.smritiAuth?.getUser()?.id) || 'elderly_user',
+            cognitiveClient,
+            onRecordSession: async (sessionPayload) => {
+              try {
+                return await cognitiveClient.recordSession(sessionPayload);
+              } catch (e) {
+                console.warn('[VR] recordSession fallback:', e);
+              }
+            },
+            onExit: () => {
+              if (vrOverlay) vrOverlay.classList.add('hidden');
+              document.body.classList.remove('overflow-hidden');
+            },
+            onSpeak: (text, speechLang) => {
+              if (voiceService && voiceService.speak) {
+                voiceService.speak(text, speechLang || lang);
+              }
+            },
+            voiceService
+          });
+        });
+      }
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
       // Initialize audio engine
       window.smritiAudio = new SmritiAudio();
 
       // 1. Enforce Elderly RBAC Session
-      const user = window.smritiAuth?.getUser();
-      if (!user || user.role !== 'elderly_user') {
+      let token = window.ApiClient?.getToken() || localStorage.getItem('smriti_session_token');
+      let user = window.smritiAuth?.getUser();
+
+      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if ((!token || !user || user.role !== 'elderly_user') && isLocalDev && window.ApiClient) {
+        try {
+          const devAuth = await window.ApiClient.loginWithGoogle({
+            oauthUser: {
+              id: 'elderly_dev_senior',
+              name: 'Sruti Baba',
+              email: 'sruti.dev@example.com'
+            },
+            intendedRole: 'elderly_user'
+          });
+          if (devAuth?.user && devAuth?.sessionToken) {
+            user = devAuth.user;
+            token = devAuth.sessionToken;
+          }
+        } catch (devErr) {
+          console.warn('[SeniorSpace] Dev session restore error:', devErr);
+        }
+      }
+
+      if (!token || !user || user.role !== 'elderly_user') {
         window.location.href = '/auth?role=elderly_user';
         return;
       }
 
       const elderlyUserId = user.id;
-      let expData = null;
+      globalElderlyUserId = elderlyUserId;
       let currentPack = null;
       let activeGameList = [];
       let currentActivityIndex = 0;
@@ -740,6 +954,7 @@
         try {
           const lang = expData?.profile?.preferredLanguage || 'as';
           currentPack = await cognitiveClient.fetchActivityPack(elderlyUserId, { language: lang });
+          globalCurrentPack = currentPack;
 
           if (currentPack && currentPack.activities && currentPack.activities.length > 0) {
             document.getElementById('game-difficulty-badge').textContent = `Level ${currentPack.difficulty || 1} (${currentPack.difficulty > 2 ? 'Active' : 'Gentle'})`;
@@ -1294,7 +1509,22 @@
         talkConversationHistory.push({ role: 'user', content: cleanText });
 
         const statusEl = document.getElementById('talk-live-transcript');
-        if (statusEl) statusEl.textContent = 'Smriti is listening and reflecting...';
+        const micBtn = document.getElementById('talk-mic-toggle-btn');
+        const micIcon = document.getElementById('talk-mic-icon');
+        const micLabel = document.getElementById('talk-mic-label');
+
+        function setReadyState() {
+          if (micBtn) {
+            micBtn.classList.remove('bg-red-600', 'animate-pulse');
+            micBtn.classList.add('bg-rose-600');
+          }
+          if (micIcon) micIcon.textContent = '🎤';
+          if (micLabel) micLabel.textContent = 'Start Talking';
+          if (statusEl) statusEl.textContent = 'Tap "Start Talking" or choose a reply below...';
+        }
+
+        // State: THINKING
+        if (statusEl) statusEl.textContent = '💭 Smriti is thinking...';
 
         try {
           const res = await window.CognitiveClient.sendConversationMessage({
@@ -1308,26 +1538,38 @@
             talkConversationHistory.push({ role: 'assistant', content: res.replyText });
             appendChatMessage('assistant', res.replyText, currentTalkLang);
             
-            // Speak response with natural elderly cadence
-            window.VoiceService.speak(res.replyText, currentTalkLang);
+            // State: SPEAKING
+            if (statusEl) statusEl.textContent = '🔊 Smriti is speaking...';
+            window.VoiceService.speak(res.replyText, currentTalkLang, {
+              onEnd: () => {
+                setReadyState();
+              }
+            });
 
             if (res.suggestedReplies) {
               renderSuggestedChips(res.suggestedReplies);
             }
-          }
-
-          if (statusEl) {
-            statusEl.textContent = 'Tap "Start Talking" or choose a reply below...';
+          } else {
+            setReadyState();
           }
         } catch (err) {
           console.warn('Conversation message error:', err);
-          const errNotice = 'Conversation service is temporarily unavailable.';
+          const errNotice = 'Smriti is having trouble connecting right now. Please try again.';
           appendChatMessage('assistant', errNotice, currentTalkLang);
           if (statusEl) statusEl.textContent = errNotice;
+          window.VoiceService.speak(errNotice, currentTalkLang, {
+            onEnd: () => {
+              setReadyState();
+            }
+          });
+          setReadyState();
         }
       }
 
-      async function initTalkAndRecallSession(exp) {
+      let openingPromptSpoken = false;
+      let cachedOpeningPrompt = null;
+
+      async function initTalkAndRecallSession(exp, shouldSpeak = false) {
         talkConversationHistory = [];
         currentTalkLang = exp?.profile?.preferredLanguage || 'as';
 
@@ -1340,11 +1582,15 @@
         try {
           const data = await window.CognitiveClient.fetchConversationPrompt(elderlyUserId, currentTalkLang);
           if (data?.promptText) {
+            cachedOpeningPrompt = data.promptText;
             talkConversationHistory.push({ role: 'assistant', content: data.promptText });
             appendChatMessage('assistant', data.promptText, currentTalkLang);
             
-            // Speak opening prompt
-            window.VoiceService.speak(data.promptText, currentTalkLang);
+            // Respect browser autoplay policy: only speak if explicitly requested via genuine user interaction
+            if (shouldSpeak && !openingPromptSpoken) {
+              openingPromptSpoken = true;
+              window.VoiceService.speak(data.promptText, currentTalkLang);
+            }
 
             if (data.suggestedReplies) {
               renderSuggestedChips(data.suggestedReplies);
@@ -1356,7 +1602,7 @@
           }
         } catch (e) {
           console.warn('Failed to load opening prompt:', e);
-          const fallback = 'Conversation service is temporarily unavailable.';
+          const fallback = 'Smriti is having trouble connecting right now. Please try again.';
           appendChatMessage('assistant', fallback, currentTalkLang);
           if (statusEl) statusEl.textContent = fallback;
         }
@@ -1365,12 +1611,13 @@
       function setupTalkAndRecall(exp) {
         currentTalkLang = exp?.profile?.preferredLanguage || 'as';
 
-        // Immediately initialize opening prompt
-        initTalkAndRecallSession(exp);
+        // Initialize opening prompt without unprompted auto-speech to satisfy browser autoplay policy
+        initTalkAndRecallSession(exp, false);
 
-        // Restart conversation button
+        // Restart conversation button (genuine user click -> can speak)
         document.getElementById('talk-restart-btn')?.addEventListener('click', () => {
-          initTalkAndRecallSession(exp);
+          openingPromptSpoken = false;
+          initTalkAndRecallSession(exp, true);
         });
 
         // Microphone toggle
@@ -1380,8 +1627,8 @@
         const statusEl = document.getElementById('talk-live-transcript');
         const textInput = document.getElementById('talk-text-input');
 
-        // Check if Web Speech API is supported
-        if (!window.VoiceService.isSpeechRecognitionSupported && statusEl) {
+        // Check if Web Speech API is supported (using actual property isRecognitionSupported)
+        if (!window.VoiceService.isRecognitionSupported && statusEl) {
           statusEl.textContent = 'Voice recognition is not supported in this browser. You can type below.';
         }
 
@@ -1419,11 +1666,22 @@
                 micIcon.textContent = '🎤';
                 micLabel.textContent = 'Start Talking';
                 
-                if (err === 'not-allowed' || err === 'service-not-allowed' || err?.includes?.('not-allowed')) {
-                  if (statusEl) statusEl.textContent = 'Microphone access is needed for voice conversation. You can continue by typing.';
+                const errorCode = err?.error || err?.message || (typeof err === 'string' ? err : '');
+
+                if (errorCode === 'not-allowed' || errorCode === 'service-not-allowed' || errorCode.includes('not-allowed')) {
+                  if (statusEl) statusEl.textContent = 'Microphone access is needed for voice conversation. Please allow microphone access or type below.';
                   if (textInput) textInput.focus();
+                } else if (errorCode === 'no-speech') {
+                  if (statusEl) statusEl.textContent = 'No speech was heard. Tap "Start Talking" to try again, or type below.';
+                } else if (errorCode === 'audio-capture') {
+                  if (statusEl) statusEl.textContent = 'No microphone was detected on your device. You can type below.';
+                  if (textInput) textInput.focus();
+                } else if (errorCode === 'network') {
+                  if (statusEl) statusEl.textContent = 'Network issue with voice recognition. You can continue by typing below.';
+                } else if (errorCode === 'aborted') {
+                  if (statusEl) statusEl.textContent = 'Listening stopped.';
                 } else {
-                  if (statusEl) statusEl.textContent = 'Could not hear clearly. Please tap to try again or type below.';
+                  if (statusEl) statusEl.textContent = 'Could not hear clearly. Please tap "Start Talking" to try again or type below.';
                 }
               },
               onEnd: () => {
@@ -1455,11 +1713,14 @@
           }
         });
 
-        // Re-initialize or scroll when user navigates into Talk & Recall section
+        // Re-initialize or speak when user navigates into Talk & Recall section
         document.querySelectorAll('.senior-tile-btn[data-view="section-talk"]').forEach(tile => {
           tile.addEventListener('click', () => {
-            if (talkConversationHistory.length === 0) {
-              initTalkAndRecallSession(exp);
+            if (cachedOpeningPrompt && !openingPromptSpoken && talkConversationHistory.length <= 1) {
+              openingPromptSpoken = true;
+              window.VoiceService.speak(cachedOpeningPrompt, currentTalkLang);
+            } else if (talkConversationHistory.length === 0) {
+              initTalkAndRecallSession(exp, true);
             }
           });
         });

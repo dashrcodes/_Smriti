@@ -21,7 +21,7 @@ const router = Router();
 /**
  * GET /api/specialist/profile/me
  */
-router.get('/profile/me', requireAuth, requireRole('medical_specialist'), async (req, res) => {
+router.get('/profile/me', requireAuth, requireRole(['medical_specialist', 'healthcare_worker']), async (req, res) => {
   try {
     const profile = await specialistService.getSpecialistProfile(req.user.id);
     return res.status(200).json({ success: true, profile });
@@ -34,7 +34,7 @@ router.get('/profile/me', requireAuth, requireRole('medical_specialist'), async 
 /**
  * PUT /api/specialist/profile/me
  */
-router.put('/profile/me', requireAuth, requireRole('medical_specialist'), async (req, res) => {
+router.put('/profile/me', requireAuth, requireRole(['medical_specialist', 'healthcare_worker']), async (req, res) => {
   try {
     const updated = await specialistService.saveSpecialistProfile(req.user.id, req.body);
     return res.status(200).json({ success: true, profile: updated });
@@ -52,7 +52,7 @@ router.put('/profile/me', requireAuth, requireRole('medical_specialist'), async 
  * GET /api/specialist/patients
  * Returns active patients linked to specialist with urgency indicators
  */
-router.get('/patients', requireAuth, requireRole('medical_specialist'), async (req, res) => {
+router.get('/patients', requireAuth, requireRole(['medical_specialist', 'healthcare_worker']), async (req, res) => {
   try {
     const patients = await specialistService.getSpecialistPatients(req.user.id);
     return res.status(200).json({ success: true, count: patients.length, patients });
@@ -66,7 +66,7 @@ router.get('/patients', requireAuth, requireRole('medical_specialist'), async (r
  * POST /api/specialist/link/request
  * Specialist initiates link request to patient by email or ID
  */
-router.post('/link/request', requireAuth, requireRole('medical_specialist'), async (req, res) => {
+router.post('/link/request', requireAuth, requireRole(['medical_specialist', 'healthcare_worker']), async (req, res) => {
   try {
     const { elderlyTarget } = req.body;
     if (!elderlyTarget) {

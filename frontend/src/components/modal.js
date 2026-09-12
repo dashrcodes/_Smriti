@@ -72,33 +72,35 @@ class RoleModalManager {
       window.smritiAudio.playSuccessChord();
     }
 
-    let targetRole = 'elderly_user';
-    if (role === 'caretaker') {
-      targetRole = 'caretaker';
-    } else if (role === 'specialist' || role === 'medical_specialist') {
-      targetRole = 'medical_specialist';
-    } else {
+    let targetRole = 'caretaker';
+    if (role === 'elderly' || role === 'elderly_user') {
       targetRole = 'elderly_user';
+    } else if (role === 'healthcare_worker') {
+      targetRole = 'healthcare_worker';
+    } else if (role === 'medical_specialist' || role === 'specialist') {
+      targetRole = 'medical_specialist';
+    } else if (role === 'caretaker') {
+      targetRole = 'caretaker';
     }
     
     // If already authenticated and matches role, route immediately to dashboard
     const currentAuth = window.smritiAuth;
     if (currentAuth && currentAuth.isAuthenticated()) {
       const userRole = currentAuth.getUserRole();
-      if (userRole === targetRole || (targetRole === 'medical_specialist' && userRole === 'healthcare_worker')) {
+      if (userRole === targetRole || ((targetRole === 'healthcare_worker' || targetRole === 'medical_specialist') && (userRole === 'healthcare_worker' || userRole === 'medical_specialist'))) {
         if (window.SmritiRouter) {
           window.SmritiRouter.navigateToRole(userRole);
-          return;
+        } else {
+          window.location.href = targetRole === 'elderly_user' ? '/senior-space' : (targetRole === 'caretaker' ? '/caretaker-studio' : '/specialist-dashboard');
         }
+        return;
       }
     }
 
     // Direct routing to role-tailored authentication page
     this.close();
     window.location.href = `/auth?role=${targetRole}`;
-  }
-}
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.smritiModal = new RoleModalManager();
-});
+    document.addEventListener('DOMContentLoaded', () => {
+      window.smritiModal = new RoleModalManager();
+    });

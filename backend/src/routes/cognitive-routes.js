@@ -47,8 +47,17 @@ router.post('/conversation/message', requireAuth, async (req, res) => {
     });
     return res.status(200).json(result);
   } catch (err) {
-    logger.error('Error processing conversational message', err);
-    return res.status(403).json({ success: false, error: err.message });
+    logger.error('Error processing conversational message', { message: err?.message, status: err?.status });
+    const isAuthError = err.message?.includes('Unauthorized');
+    const statusCode = isAuthError ? 403 : 503;
+    const userSafeMessage = isAuthError
+      ? 'Unauthorized: You cannot access conversation for this senior.'
+      : 'Smriti is having trouble connecting right now. Please try again.';
+    return res.status(statusCode).json({
+      success: false,
+      error: userSafeMessage,
+      userFriendlyMessage: userSafeMessage
+    });
   }
 });
 

@@ -148,7 +148,7 @@
 
         <button class="nav-tab-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl font-bold text-xs transition-all text-left text-slate-600 hover:bg-slate-100" data-tab="tab-health">
           <span class="text-base">💊</span>
-          <span>Health & Reminders</span>
+          <span>Health & ABDM Records</span>
         </button>
 
         <div class="pt-3 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -535,10 +535,178 @@
       </section>
 
       <!-- ================================================================= -->
-      <!-- TAB 9: HEALTH & REMINDERS (CLINICAL WORKFLOW & SPECIALIST LOCK)   -->
+      <!-- TAB 9: HEALTH & ABDM RECORDS (CLINICAL WORKFLOW & SPECIALIST LOCK) -->
       <!-- ================================================================= -->
       <section id="tab-health" class="tab-pane hidden space-y-6">
-        
+
+        <!-- ABDM Digital Health Ecosystem Hub -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+
+          <!-- ABDM Header Banner -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🇮🇳</span>
+                <h2 class="text-xl font-extrabold text-[#0F172A]">ABDM Digital Health Ecosystem</h2>
+                <span id="abdm-mode-pill" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 font-bold text-[10px] uppercase tracking-wider">Demo / Sandbox</span>
+              </div>
+              <p class="text-xs text-slate-500">Ayushman Bharat Digital Mission • ABHA Identity, Unified Electronic Consent & Longitudinal Records</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="abdm-refresh-btn" class="px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center gap-1.5" title="Refresh ABDM Status">
+                <span>🔄</span>
+                <span>Sync ABDM</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Grid: ABHA Identity Card + Consent Management Card -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+            <!-- 1. ABHA Identity Card -->
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 flex flex-col justify-between">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg">🆔</span>
+                    <span class="font-extrabold text-sm text-[#0F172A]">ABHA Identifier</span>
+                  </div>
+                  <span id="abdm-abha-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-200 text-slate-700">
+                    Checking...
+                  </span>
+                </div>
+
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-500">
+                    <span>ABHA Address:</span>
+                    <span id="abdm-display-abha-address" class="font-mono font-bold text-slate-800">Not Linked</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-500">
+                    <span>ABHA Number:</span>
+                    <span id="abdm-display-abha-number" class="font-mono font-bold text-slate-800">—</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-500">
+                    <span>Linked On:</span>
+                    <span id="abdm-display-linked-at" class="text-slate-600 font-medium">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pt-2 flex items-center gap-2">
+                <button id="abdm-open-link-modal-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5">
+                  <span>🔗</span>
+                  <span id="abdm-link-btn-text">Link ABHA Identifier</span>
+                </button>
+                <button id="abdm-unlink-btn" class="hidden py-2.5 px-3 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-700 font-bold text-xs transition-all flex items-center gap-1">
+                  <span>Unlink</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Consent Management Card -->
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 flex flex-col justify-between">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg">🛡️</span>
+                    <span class="font-extrabold text-sm text-[#0F172A]">Consent Artifact & Access</span>
+                  </div>
+                  <span id="abdm-consent-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-200 text-slate-700">
+                    No Active Consent
+                  </span>
+                </div>
+
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between text-slate-500">
+                    <span>Purpose:</span>
+                    <span id="abdm-consent-purpose" class="font-bold text-slate-800">Geriatric Dementia Care</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-500">
+                    <span>Validity Expiry:</span>
+                    <span id="abdm-consent-expiry" class="font-mono text-slate-600">—</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-500">
+                    <span>Requested Types:</span>
+                    <span class="text-[11px] font-semibold text-slate-700">Rx, MRI/Lab, OPD, Discharge</span>
+                  </div>
+                </div>
+              </div>
+
+              <div id="abdm-consent-actions" class="pt-2 flex items-center gap-2">
+                <button id="abdm-open-consent-modal-btn" class="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#0F172A] font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5">
+                  <span>➕</span>
+                  <span>Request Consent</span>
+                </button>
+                <button id="abdm-quick-approve-btn" class="hidden py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1">
+                  <span>Approve</span>
+                </button>
+                <button id="abdm-revoke-consent-btn" class="hidden py-2.5 px-3 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-700 font-bold text-xs transition-all flex items-center gap-1">
+                  <span>Revoke Consent</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 3. Protected Health Records Viewer (Guarded by Consent) -->
+          <div class="space-y-4 pt-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 class="font-extrabold text-base text-[#0F172A] flex items-center gap-2">
+                  <span>📁</span> Protected Longitudinal Health Records
+                </h3>
+                <p class="text-xs text-slate-500">Diagnostic reports, neuro-imaging summaries, and medical prescriptions retrieved via ABDM HIU.</p>
+              </div>
+
+              <!-- Filter Pills (Active when unlocked) -->
+              <div id="abdm-record-filter-container" class="hidden flex items-center gap-1.5 flex-wrap">
+                <button class="abdm-filter-btn active px-3 py-1 rounded-xl text-[11px] font-bold bg-indigo-600 text-white" data-type="all">All</button>
+                <button class="abdm-filter-btn px-3 py-1 rounded-xl text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-type="Prescription">Prescriptions</button>
+                <button class="abdm-filter-btn px-3 py-1 rounded-xl text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-type="DiagnosticReport">Diagnostics</button>
+                <button class="abdm-filter-btn px-3 py-1 rounded-xl text-[11px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-type="OPDRecord">OPD Consults</button>
+              </div>
+            </div>
+
+            <!-- LOCKED STATE BANNER (When consent is missing/denied/revoked) -->
+            <div id="abdm-records-locked-card" class="p-8 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-300 text-center space-y-3">
+              <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-900 mx-auto flex items-center justify-center text-2xl font-bold">
+                🔒
+              </div>
+              <div class="max-w-md mx-auto space-y-1">
+                <div class="font-extrabold text-sm text-[#0F172A]" id="abdm-locked-title">Protected Health Information Locked</div>
+                <p class="text-xs text-slate-500" id="abdm-locked-desc">
+                  In compliance with ABDM privacy standards, health records cannot be accessed without an active, granted patient consent artifact.
+                </p>
+              </div>
+              <button id="abdm-unlock-prompt-btn" class="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all inline-flex items-center gap-2">
+                <span>🛡️</span>
+                <span>Request Patient Consent to Unlock</span>
+              </button>
+            </div>
+
+            <!-- UNLOCKED RECORDS CONTAINER (When consent is GRANTED) -->
+            <div id="abdm-records-unlocked-container" class="hidden space-y-4">
+              <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span>✅</span>
+                  <span><strong>Consent Verified:</strong> Access to protected health records authorized under ABDM Caregiver Protocol.</span>
+                </div>
+                <span class="font-mono text-[10px] font-bold text-emerald-800" id="abdm-records-count-badge">4 Records Found</span>
+              </div>
+
+              <div id="abdm-records-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Dynamically rendered clinical records -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- CLINICAL WORKFLOW & SPECIALIST PRESCRIBED MEDICATIONS           -->
+        <!-- =============================================================== -->
         <!-- Disclaimer Banner -->
         <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200 text-xs text-slate-600 flex items-start gap-3 shadow-xs">
           <span class="text-lg">ℹ️</span>
@@ -631,6 +799,7 @@
             <!-- Dynamic reminder items rendered here -->
           </div>
         </div>
+
       </section>
 
       <!-- ================================================================= -->
@@ -1380,6 +1549,149 @@
     </div>
   </div>
 
+  <!-- ===================================================================== -->
+  <!-- MODAL: ABDM LINK ABHA IDENTIFIER                                      -->
+  <!-- ===================================================================== -->
+  <div id="abdm-link-modal" class="fixed inset-0 z-50 bg-[#0F172A]/80 backdrop-blur-sm hidden flex items-center justify-center p-4" role="dialog">
+    <div class="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 animate-fade-in">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="font-extrabold text-base text-[#0F172A] flex items-center gap-2">
+            <span>🇮🇳</span> Link ABHA Identifier
+          </h3>
+          <p class="text-xs text-slate-500 font-medium">Ayushman Bharat Digital Mission</p>
+        </div>
+        <button id="close-abdm-link-modal-btn" class="p-1 text-slate-400 hover:text-slate-700 rounded-full font-bold">✕</button>
+      </div>
+
+      <form id="abdm-link-form" class="space-y-4 pt-4">
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">ABHA Address / Health ID</label>
+          <input type="text" id="abdm-input-address" placeholder="e.g. sruti.sharma@abdm" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600" />
+          <p class="text-[11px] text-slate-400">Can be an ABHA address or 14-digit ABHA number</p>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">14-Digit ABHA Number (Optional)</label>
+          <input type="text" id="abdm-input-number" placeholder="e.g. 91-1234-5678-9012" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600" />
+        </div>
+
+        <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 space-y-1">
+          <div class="text-[11px] font-bold text-amber-900 flex items-center gap-1">
+            <span>🧪</span> Simulated OTP Verification (Sandbox Mode)
+          </div>
+          <p class="text-[10px] text-amber-800">
+            For demonstration, any 6-digit code or default <code class="font-mono bg-amber-200/60 px-1 rounded">123456</code> will simulate verified Aadhaar/Mobile OTP authentication.
+          </p>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Authentication OTP</label>
+          <input type="text" id="abdm-input-otp" value="123456" maxlength="6" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600" />
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+          <span>🔗</span>
+          <span>Verify & Link ABHA</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: ABDM REQUEST CONSENT                                           -->
+  <!-- ===================================================================== -->
+  <div id="abdm-consent-modal" class="fixed inset-0 z-50 bg-[#0F172A]/80 backdrop-blur-sm hidden flex items-center justify-center p-4" role="dialog">
+    <div class="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 animate-fade-in">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="font-extrabold text-base text-[#0F172A] flex items-center gap-2">
+            <span>🛡️</span> Request ABDM Consent
+          </h3>
+          <p class="text-xs text-slate-500 font-medium">Authorize Caregiver Access to Protected Health Data</p>
+        </div>
+        <button id="close-abdm-consent-modal-btn" class="p-1 text-slate-400 hover:text-slate-700 rounded-full font-bold">✕</button>
+      </div>
+
+      <form id="abdm-consent-form" class="space-y-4 pt-4">
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Clinical Purpose</label>
+          <select id="abdm-consent-input-purpose" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600">
+            <option value="Geriatric Dementia Care & Cognitive Assessment">Geriatric Dementia Care & Cognitive Assessment</option>
+            <option value="Care Management & Routine Tracking">Care Management & Routine Tracking</option>
+            <option value="Neurocognitive Follow-up & Treatment Adherence">Neurocognitive Follow-up & Treatment Adherence</option>
+          </select>
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Health Information Types (HI Types)</label>
+          <div class="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-800">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" id="abdm-hi-prescription" checked class="accent-indigo-600" />
+              <span>💊 Prescriptions</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" id="abdm-hi-diagnostic" checked class="accent-indigo-600" />
+              <span>🔬 Diagnostic / MRI</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" id="abdm-hi-opd" checked class="accent-indigo-600" />
+              <span>🩺 OPD Consults</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" id="abdm-hi-discharge" checked class="accent-indigo-600" />
+              <span>🏥 Discharge Notes</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">Consent Validity Period</label>
+          <select id="abdm-consent-input-duration" class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600">
+            <option value="180">6 Months (Recommended for Dementia Care)</option>
+            <option value="90">3 Months</option>
+            <option value="30">1 Month</option>
+            <option value="365">1 Year</option>
+          </select>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-[#0F172A] font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2">
+          <span>🛡️</span>
+          <span>Submit Consent Request</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: VIEW CLINICAL RECORD & FHIR DETAILS                            -->
+  <!-- ===================================================================== -->
+  <div id="abdm-record-modal" class="fixed inset-0 z-50 bg-[#0F172A]/85 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto" role="dialog">
+    <div class="relative w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 animate-fade-in my-8 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 flex-shrink-0">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="abdm-record-modal-icon" class="text-xl">📋</span>
+            <h3 class="font-extrabold text-base text-[#0F172A]" id="abdm-record-modal-title">Clinical Record Details</h3>
+          </div>
+          <p class="text-xs text-slate-500 font-medium" id="abdm-record-modal-facility">Facility details</p>
+        </div>
+        <button id="close-abdm-record-modal-btn" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-full font-bold">✕</button>
+      </div>
+
+      <div class="py-4 space-y-4 overflow-y-auto flex-grow" id="abdm-record-modal-body">
+        <!-- Dynamic record details rendered here -->
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-between flex-shrink-0">
+        <span class="text-[10px] font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full uppercase">ABDM Sandbox Demo Data</span>
+        <button type="button" id="close-abdm-record-modal-footer-btn" class="px-5 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300 font-bold text-xs text-slate-800 transition-all">
+          Close Record
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
@@ -1390,6 +1702,7 @@
   <script src="/src/services/specialist-client.js"></script>
   <script src="/src/services/media-client.js"></script>
   <script src="/src/services/profile-client.js"></script>
+  <script src="/src/services/abdm-client.js"></script>
   <script src="/src/auth/auth-state.js"></script>
   <script src="/src/utils/router.js"></script>
 
@@ -1500,7 +1813,10 @@
               <div>
                 <div class="font-extrabold text-sm text-[#0F172A]">${p.elderlyName || 'Senior User'}</div>
                 <div class="text-xs text-slate-500 font-mono">${p.elderlyEmail || 'Protected profile'}</div>
-                <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Connected</span>
+                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                  <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Connected</span>
+                  <span id="overview-abha-pill-${p.elderlyUserId}" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">ABHA</span>
+                </div>
               </div>
             </div>
             <button class="switch-patient-btn px-3 py-1.5 rounded-xl ${p.elderlyUserId === activePatientId ? 'bg-amber-500 text-[#0F172A]' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} text-xs font-bold transition-all" data-id="${p.elderlyUserId}">
@@ -1646,6 +1962,9 @@
 
           // Load Cognitive Insights & Support Alerts
           await loadCognitiveInsights(elderlyUserId);
+
+          // Load ABDM Status, Consent & Health Records
+          await loadAbdmData(elderlyUserId);
 
         } catch (err) {
           console.error('Failed to load active patient data:', err);
@@ -2571,6 +2890,462 @@
           });
         });
       }
+
+      // =====================================================================
+      // ABDM DIGITAL HEALTH ECOSYSTEM LOGIC & STATE
+      // =====================================================================
+      let abdmCurrentStatus = null;
+      let abdmCurrentConsents = [];
+      let abdmCurrentRecords = [];
+      let abdmActiveFilter = 'all';
+
+      async function loadAbdmData(elderlyUserId) {
+        if (!elderlyUserId || !window.AbdmClient) return;
+
+        try {
+          // 1. Fetch ABHA & Consent Status
+          const statusRes = await window.AbdmClient.getStatus(elderlyUserId);
+          abdmCurrentStatus = statusRes;
+
+          // Mode pill
+          const modePill = document.getElementById('abdm-mode-pill');
+          if (modePill) {
+            modePill.textContent = statusRes.isMockMode ? 'Demo / Sandbox' : 'Live Gateway';
+            modePill.className = statusRes.isMockMode
+              ? 'px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 font-bold text-[10px] uppercase tracking-wider'
+              : 'px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-[10px] uppercase tracking-wider';
+          }
+
+          // 2. Render ABHA Card
+          const abha = statusRes.abha || {};
+          const isLinked = statusRes.isLinked;
+          const abhaBadge = document.getElementById('abdm-abha-status-badge');
+          const addressDisp = document.getElementById('abdm-display-abha-address');
+          const numberDisp = document.getElementById('abdm-display-abha-number');
+          const linkedAtDisp = document.getElementById('abdm-display-linked-at');
+          const linkBtnText = document.getElementById('abdm-link-btn-text');
+          const unlinkBtn = document.getElementById('abdm-unlink-btn');
+
+          if (isLinked) {
+            if (abhaBadge) {
+              abhaBadge.textContent = 'Linked & Verified';
+              abhaBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800';
+            }
+            if (addressDisp) addressDisp.textContent = abha.abhaAddress || 'Linked';
+            if (numberDisp) numberDisp.textContent = abha.abhaNumber || '91-XXXX-XXXX-XXXX';
+            if (linkedAtDisp) linkedAtDisp.textContent = abha.linkedAt ? new Date(abha.linkedAt).toLocaleDateString() : 'Active';
+            if (linkBtnText) linkBtnText.textContent = 'Update ABHA';
+            unlinkBtn?.classList.remove('hidden');
+          } else {
+            if (abhaBadge) {
+              abhaBadge.textContent = 'Not Linked';
+              abhaBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800';
+            }
+            if (addressDisp) addressDisp.textContent = 'Not Linked';
+            if (numberDisp) numberDisp.textContent = '—';
+            if (linkedAtDisp) linkedAtDisp.textContent = '—';
+            if (linkBtnText) linkBtnText.textContent = 'Link ABHA Identifier';
+            unlinkBtn?.classList.add('hidden');
+          }
+
+          // 3. Fetch & Render Consents
+          const consents = await window.AbdmClient.getConsents(elderlyUserId);
+          abdmCurrentConsents = consents;
+
+          const consentBadge = document.getElementById('abdm-consent-status-badge');
+          const consentPurpose = document.getElementById('abdm-consent-purpose');
+          const consentExpiry = document.getElementById('abdm-consent-expiry');
+          const approveBtn = document.getElementById('abdm-quick-approve-btn');
+          const revokeBtn = document.getElementById('abdm-revoke-consent-btn');
+          const reqConsentBtn = document.getElementById('abdm-open-consent-modal-btn');
+
+          const activeGranted = consents.find(c => c.status === 'GRANTED' && new Date(c.expiresAt) > new Date());
+          const pendingRequest = consents.find(c => c.status === 'REQUESTED');
+
+          if (activeGranted) {
+            if (consentBadge) {
+              consentBadge.textContent = 'Consent Active';
+              consentBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800';
+            }
+            if (consentPurpose) consentPurpose.textContent = activeGranted.purpose?.text || 'Geriatric Dementia Care';
+            if (consentExpiry) consentExpiry.textContent = new Date(activeGranted.expiresAt).toLocaleDateString();
+            revokeBtn?.classList.remove('hidden');
+            if (revokeBtn) revokeBtn.dataset.id = activeGranted.id;
+            approveBtn?.classList.add('hidden');
+            reqConsentBtn?.classList.add('hidden');
+          } else if (pendingRequest) {
+            if (consentBadge) {
+              consentBadge.textContent = 'Pending Approval';
+              consentBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800';
+            }
+            if (consentPurpose) consentPurpose.textContent = pendingRequest.purpose?.text || 'Geriatric Dementia Care';
+            if (consentExpiry) consentExpiry.textContent = 'Pending Grant';
+            approveBtn?.classList.remove('hidden');
+            if (approveBtn) approveBtn.dataset.id = pendingRequest.id;
+            revokeBtn?.classList.add('hidden');
+            reqConsentBtn?.classList.add('hidden');
+          } else {
+            if (consentBadge) {
+              consentBadge.textContent = 'No Active Consent';
+              consentBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-200 text-slate-700';
+            }
+            if (consentPurpose) consentPurpose.textContent = 'Geriatric Dementia Care';
+            if (consentExpiry) consentExpiry.textContent = '—';
+            approveBtn?.classList.add('hidden');
+            revokeBtn?.classList.add('hidden');
+            reqConsentBtn?.classList.remove('hidden');
+          }
+
+          // 4. Handle Protected Health Records (Consent-Guarded)
+          const lockedCard = document.getElementById('abdm-records-locked-card');
+          const unlockedContainer = document.getElementById('abdm-records-unlocked-container');
+          const filterContainer = document.getElementById('abdm-record-filter-container');
+
+          if (!activeGranted) {
+            // Strictly LOCKED
+            lockedCard?.classList.remove('hidden');
+            unlockedContainer?.classList.add('hidden');
+            filterContainer?.classList.add('hidden');
+            const lockedTitle = document.getElementById('abdm-locked-title');
+            const lockedDesc = document.getElementById('abdm-locked-desc');
+            if (pendingRequest) {
+              if (lockedTitle) lockedTitle.textContent = 'Consent Request Pending Approval';
+              if (lockedDesc) lockedDesc.textContent = 'A consent request has been initiated. Patient or authorized guardian approval is required to decrypt and view records.';
+            } else {
+              if (lockedTitle) lockedTitle.textContent = 'Protected Health Information Locked';
+              if (lockedDesc) lockedDesc.textContent = 'In compliance with ABDM privacy standards, health records cannot be accessed without an active, granted patient consent artifact.';
+            }
+          } else {
+            // UNLOCKED: Fetch Records
+            try {
+              const recRes = await window.AbdmClient.getHealthRecords(elderlyUserId);
+              abdmCurrentRecords = recRes.records || [];
+              lockedCard?.classList.add('hidden');
+              unlockedContainer?.classList.remove('hidden');
+              filterContainer?.classList.remove('hidden');
+              const countBadge = document.getElementById('abdm-records-count-badge');
+              if (countBadge) countBadge.textContent = `${abdmCurrentRecords.length} Records Retrieved`;
+              renderAbdmRecords(abdmCurrentRecords, abdmActiveFilter);
+            } catch (recErr) {
+              console.warn('Records fetch error:', recErr);
+              lockedCard?.classList.remove('hidden');
+              unlockedContainer?.classList.add('hidden');
+              filterContainer?.classList.add('hidden');
+            }
+          }
+
+        } catch (err) {
+          console.error('Failed to load ABDM data:', err);
+        }
+      }
+
+      function renderAbdmRecords(records, filter = 'all') {
+        const grid = document.getElementById('abdm-records-cards-grid');
+        if (!grid) return;
+
+        const filtered = filter === 'all' ? records : records.filter(r => r.type === filter);
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400 text-xs">
+              No health records found under '${filter}'.
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = filtered.map(rec => {
+          const typeIcon = rec.type === 'Prescription' ? '💊'
+            : rec.type === 'DiagnosticReport' ? '🔬'
+            : rec.type === 'OPDRecord' ? '🩺'
+            : '🏥';
+
+          const typePillClass = rec.type === 'Prescription' ? 'bg-rose-100 text-rose-800'
+            : rec.type === 'DiagnosticReport' ? 'bg-purple-100 text-purple-800'
+            : rec.type === 'OPDRecord' ? 'bg-blue-100 text-blue-800'
+            : 'bg-emerald-100 text-emerald-800';
+
+          return `
+            <div class="p-5 rounded-3xl border border-slate-200 bg-white space-y-3 shadow-sm hover:border-indigo-300 transition-all flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${typePillClass} flex items-center gap-1">
+                    <span>${typeIcon}</span>
+                    <span>${rec.type}</span>
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">Demo Sandbox</span>
+                    <span class="text-xs font-mono font-bold text-slate-500">${rec.recordDate}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 class="font-extrabold text-sm text-[#0F172A] leading-snug">${rec.title}</h4>
+                  <div class="text-[11px] text-slate-500 font-medium">${rec.doctorName} • ${rec.facilityName}</div>
+                </div>
+
+                <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">${rec.summary}</p>
+              </div>
+
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">${rec.category}</span>
+                <button class="view-abdm-record-btn px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-xs font-bold transition-all flex items-center gap-1" data-id="${rec.id}">
+                  <span>View Details</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        grid.querySelectorAll('.view-abdm-record-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const rec = records.find(r => r.id === btn.dataset.id);
+            if (!rec) return;
+            openAbdmRecordModal(rec);
+          });
+        });
+      }
+
+      function openAbdmRecordModal(rec) {
+        const modal = document.getElementById('abdm-record-modal');
+        const title = document.getElementById('abdm-record-modal-title');
+        const facility = document.getElementById('abdm-record-modal-facility');
+        const body = document.getElementById('abdm-record-modal-body');
+        const icon = document.getElementById('abdm-record-modal-icon');
+
+        if (title) title.textContent = rec.title;
+        if (facility) facility.textContent = `${rec.doctorName} • ${rec.facilityName} (${rec.recordDate})`;
+        if (icon) {
+          icon.textContent = rec.type === 'Prescription' ? '💊'
+            : rec.type === 'DiagnosticReport' ? '🔬'
+            : rec.type === 'OPDRecord' ? '🩺' : '🏥';
+        }
+
+        let customDetailsHtml = '';
+        if (rec.type === 'Prescription' && rec.details?.medications) {
+          customDetailsHtml = `
+            <div class="space-y-2">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-700">Prescribed Medications</div>
+              <div class="space-y-2">
+                ${rec.details.medications.map(m => `
+                  <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1">
+                    <div class="flex items-center justify-between font-bold text-slate-900">
+                      <span>💊 ${m.name} (${m.dosage})</span>
+                      <span class="text-[10px] font-mono bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">${m.frequency}</span>
+                    </div>
+                    <div class="text-slate-600 text-[11px]">${m.instructions} • Duration: ${m.duration}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        } else if (rec.type === 'DiagnosticReport' && rec.details?.findings) {
+          customDetailsHtml = `
+            <div class="space-y-2">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-700">Radiological Findings & Impression</div>
+              <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs text-slate-700">
+                <div class="font-bold text-slate-900">Impression: ${rec.details.impression || ''}</div>
+                <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-600">
+                  ${(rec.details.findings || []).map(f => `<li>${f}</li>`).join('')}
+                </ul>
+              </div>
+            </div>
+          `;
+        }
+
+        if (body) {
+          body.innerHTML = `
+            <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-1">
+              <div class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Clinical Summary</div>
+              <p class="text-xs text-indigo-900 leading-relaxed">${rec.summary}</p>
+            </div>
+
+            ${customDetailsHtml}
+
+            <!-- FHIR Bundle Collapsible View -->
+            <div class="border border-slate-200 rounded-2xl overflow-hidden">
+              <details class="text-xs">
+                <summary class="p-3 bg-slate-100 font-bold text-slate-700 cursor-pointer select-none hover:bg-slate-200 flex items-center justify-between">
+                  <span>ABDM FHIR Resource JSON Bundle</span>
+                  <span class="text-[10px] text-slate-500 font-mono">click to expand</span>
+                </summary>
+                <pre class="p-3 bg-slate-900 text-emerald-400 font-mono text-[11px] overflow-x-auto max-h-60">${JSON.stringify(rec.fhirBundle || rec, null, 2)}</pre>
+              </details>
+            </div>
+          `;
+        }
+
+        modal?.classList.remove('hidden');
+      }
+
+      // Close modal handlers
+      document.getElementById('close-abdm-record-modal-btn')?.addEventListener('click', () => {
+        document.getElementById('abdm-record-modal')?.classList.add('hidden');
+      });
+      document.getElementById('close-abdm-record-modal-footer-btn')?.addEventListener('click', () => {
+        document.getElementById('abdm-record-modal')?.classList.add('hidden');
+      });
+
+      // Filter Buttons
+      document.querySelectorAll('.abdm-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.abdm-filter-btn').forEach(b => {
+            b.classList.remove('active', 'bg-indigo-600', 'text-white');
+            b.classList.add('bg-slate-100', 'text-slate-600');
+          });
+          btn.classList.add('active', 'bg-indigo-600', 'text-white');
+          btn.classList.remove('bg-slate-100', 'text-slate-600');
+          abdmActiveFilter = btn.dataset.type;
+          renderAbdmRecords(abdmCurrentRecords, abdmActiveFilter);
+        });
+      });
+
+      // Open Link ABHA Modal
+      document.getElementById('abdm-open-link-modal-btn')?.addEventListener('click', () => {
+        if (!activePatientId) {
+          showToast('Please select an elderly patient first', true);
+          return;
+        }
+        const abha = abdmCurrentStatus?.abha || {};
+        const addrInput = document.getElementById('abdm-input-address');
+        const numInput = document.getElementById('abdm-input-number');
+        if (addrInput) addrInput.value = abha.abhaAddress || '';
+        if (numInput) numInput.value = abha.abhaNumber || '';
+        document.getElementById('abdm-link-modal')?.classList.remove('hidden');
+      });
+
+      document.getElementById('close-abdm-link-modal-btn')?.addEventListener('click', () => {
+        document.getElementById('abdm-link-modal')?.classList.add('hidden');
+      });
+
+      // Submit Link ABHA Form
+      document.getElementById('abdm-link-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!activePatientId) return;
+
+        const address = document.getElementById('abdm-input-address')?.value;
+        const number = document.getElementById('abdm-input-number')?.value;
+        const otp = document.getElementById('abdm-input-otp')?.value;
+
+        try {
+          await window.AbdmClient.linkAbha(activePatientId, {
+            abhaAddress: address,
+            abhaNumber: number,
+            otp
+          });
+          showToast('ABHA identifier successfully verified and linked!');
+          document.getElementById('abdm-link-modal')?.classList.add('hidden');
+          await loadAbdmData(activePatientId);
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+
+      // Unlink ABHA Button
+      document.getElementById('abdm-unlink-btn')?.addEventListener('click', async () => {
+        if (!activePatientId) return;
+        if (!confirm('Are you sure you want to unlink ABHA? Any active consents will be revoked.')) return;
+
+        try {
+          await window.AbdmClient.unlinkAbha(activePatientId);
+          showToast('ABHA identifier unlinked');
+          await loadAbdmData(activePatientId);
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+
+      // Open Consent Modal
+      document.getElementById('abdm-open-consent-modal-btn')?.addEventListener('click', () => {
+        if (!activePatientId) {
+          showToast('Please select an elderly patient first', true);
+          return;
+        }
+        document.getElementById('abdm-consent-modal')?.classList.remove('hidden');
+      });
+
+      document.getElementById('abdm-unlock-prompt-btn')?.addEventListener('click', () => {
+        if (!activePatientId) {
+          showToast('Please select an elderly patient first', true);
+          return;
+        }
+        document.getElementById('abdm-consent-modal')?.classList.remove('hidden');
+      });
+
+      document.getElementById('close-abdm-consent-modal-btn')?.addEventListener('click', () => {
+        document.getElementById('abdm-consent-modal')?.classList.add('hidden');
+      });
+
+      // Submit Consent Form
+      document.getElementById('abdm-consent-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!activePatientId) return;
+
+        const purpose = document.getElementById('abdm-consent-input-purpose')?.value;
+        const duration = parseInt(document.getElementById('abdm-consent-input-duration')?.value || '180', 10);
+        const hiTypes = [];
+        if (document.getElementById('abdm-hi-prescription')?.checked) hiTypes.push('Prescription');
+        if (document.getElementById('abdm-hi-diagnostic')?.checked) hiTypes.push('DiagnosticReport');
+        if (document.getElementById('abdm-hi-opd')?.checked) hiTypes.push('OPDRecord');
+        if (document.getElementById('abdm-hi-discharge')?.checked) hiTypes.push('DischargeSummary');
+
+        try {
+          await window.AbdmClient.requestConsent({
+            elderlyUserId: activePatientId,
+            purpose: { code: 'CAREMGT', text: purpose },
+            hiTypes,
+            dateRange: {
+              from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              to: new Date().toISOString().split('T')[0]
+            }
+          });
+          showToast('Consent request submitted under ABDM protocol');
+          document.getElementById('abdm-consent-modal')?.classList.add('hidden');
+          await loadAbdmData(activePatientId);
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+
+      // Quick Approve Consent Button
+      document.getElementById('abdm-quick-approve-btn')?.addEventListener('click', async () => {
+        if (!activePatientId) return;
+        const consentId = document.getElementById('abdm-quick-approve-btn')?.dataset.id;
+        if (!consentId) return;
+
+        try {
+          await window.AbdmClient.updateConsentStatus(consentId, 'GRANTED', activePatientId);
+          showToast('Consent granted! Health records unlocked.');
+          await loadAbdmData(activePatientId);
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+
+      // Revoke Consent Button
+      document.getElementById('abdm-revoke-consent-btn')?.addEventListener('click', async () => {
+        if (!activePatientId) return;
+        const consentId = document.getElementById('abdm-revoke-consent-btn')?.dataset.id;
+        if (!consentId) return;
+
+        if (!confirm('Revoke ABDM consent? Caregiver access to protected health records will be terminated immediately.')) return;
+
+        try {
+          await window.AbdmClient.updateConsentStatus(consentId, 'REVOKED', activePatientId);
+          showToast('Consent revoked. Records locked.');
+          await loadAbdmData(activePatientId);
+        } catch (err) {
+          showToast(err.message, true);
+        }
+      });
+
+      // Refresh Button
+      document.getElementById('abdm-refresh-btn')?.addEventListener('click', async () => {
+        if (!activePatientId) return;
+        await loadAbdmData(activePatientId);
+        showToast('ABDM records refreshed');
+      });
 
       // 6. Form Handlers & Button Actions
 

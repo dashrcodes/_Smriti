@@ -108,10 +108,14 @@
 
         <!-- Role Switcher -->
         <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-          <span>Are you a family member or caregiver?</span>
+          <span>Are you a family member or clinician?</span>
           <div class="flex items-center gap-3">
             <button class="switch-role-btn font-bold text-indigo-700 hover:underline" data-target="caretaker">
               Caretaker Studio →
+            </button>
+            <span class="text-slate-300">•</span>
+            <button class="switch-role-btn font-bold text-teal-700 hover:underline" data-target="healthcare_worker">
+              Healthcare Worker →
             </button>
             <span class="text-slate-300">•</span>
             <button class="switch-role-btn font-bold text-emerald-700 hover:underline" data-target="medical_specialist">
@@ -178,6 +182,10 @@
               ← Senior Space
             </button>
             <span class="text-slate-300">•</span>
+            <button class="switch-role-btn font-bold text-teal-700 hover:underline" data-target="healthcare_worker">
+              Healthcare Worker →
+            </button>
+            <span class="text-slate-300">•</span>
             <button class="switch-role-btn font-bold text-emerald-700 hover:underline" data-target="medical_specialist">
               Doctor/Clinician →
             </button>
@@ -187,22 +195,22 @@
       </div>
 
       <!-- ===================================================================== -->
-      <!-- VIEW C: MEDICAL SPECIALIST AUTHENTICATION                             -->
+      <!-- VIEW C: MEDICAL SPECIALIST & HEALTHCARE WORKER AUTHENTICATION         -->
       <!-- ===================================================================== -->
       <div id="specialist-auth-card" class="hidden bg-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-emerald-200 text-left space-y-6">
         
         <div class="flex items-center justify-between">
           <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-900 font-bold text-xs uppercase tracking-wider border border-emerald-200">
-            <span>👨‍⚕️</span> Medical Specialist & Clinician Portal
+            <span id="specialist-portal-icon">👨‍⚕️</span> <span id="specialist-portal-badge">Medical Specialist & Clinician Portal</span>
           </span>
-          <span class="text-xs text-emerald-700 font-bold bg-emerald-100 px-2.5 py-0.5 rounded-full">Clinical Hub</span>
+          <span id="specialist-hub-label" class="text-xs text-emerald-700 font-bold bg-emerald-100 px-2.5 py-0.5 rounded-full">Clinical Hub</span>
         </div>
 
         <div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
+          <h1 id="specialist-portal-heading" class="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
             Clinical Care & Prescription Hub
           </h1>
-          <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+          <p id="specialist-portal-desc" class="text-sm text-slate-600 mt-2 leading-relaxed">
             Monitor patient medication adherence, review caregiver symptom reports, adjust prescriptions with audit trails, and evaluate cognitive game performance trends.
           </p>
         </div>
@@ -227,10 +235,10 @@
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <span>Sign In as Medical Specialist</span>
+            <span id="specialist-google-btn-text">Sign In as Medical Specialist</span>
           </button>
           
-          <p class="text-xs text-center text-slate-400">
+          <p id="specialist-google-btn-sub" class="text-xs text-center text-slate-400">
             🛡️ Requires active medical license / registration verification
           </p>
         </div>
@@ -245,6 +253,10 @@
             <span class="text-slate-300">•</span>
             <button class="switch-role-btn font-bold text-indigo-700 hover:underline" data-target="caretaker">
               Caretaker Studio →
+            </button>
+            <span class="text-slate-300">•</span>
+            <button id="switch-clinical-role-btn" class="switch-role-btn font-bold text-teal-700 hover:underline" data-target="healthcare_worker">
+              Healthcare Worker View →
             </button>
           </div>
         </div>
@@ -297,19 +309,55 @@
       // Determine active role from URL
       const params = new URLSearchParams(window.location.search);
       const rawRole = params.get('role');
-      let currentRole = (rawRole === 'caretaker' || rawRole === 'medical_specialist') ? rawRole : 'elderly_user';
+      let currentRole = (rawRole === 'caretaker' || rawRole === 'medical_specialist' || rawRole === 'healthcare_worker') ? rawRole : 'elderly_user';
 
       function renderRoleView(role) {
-        currentRole = role;
+        currentRole = (role === 'caretaker' || role === 'medical_specialist' || role === 'healthcare_worker') ? role : 'elderly_user';
         hideError();
         elderlyCard.classList.add('hidden');
         caretakerCard.classList.add('hidden');
         specialistCard.classList.add('hidden');
 
-        if (role === 'elderly_user') {
+        if (currentRole === 'elderly_user') {
           elderlyCard.classList.remove('hidden');
-        } else if (role === 'medical_specialist') {
+        } else if (currentRole === 'medical_specialist' || currentRole === 'healthcare_worker') {
           specialistCard.classList.remove('hidden');
+
+          const isHcWorker = currentRole === 'healthcare_worker';
+          const iconEl = document.getElementById('specialist-portal-icon');
+          const badgeEl = document.getElementById('specialist-portal-badge');
+          const hubLabelEl = document.getElementById('specialist-hub-label');
+          const headingEl = document.getElementById('specialist-portal-heading');
+          const descEl = document.getElementById('specialist-portal-desc');
+          const btnTextEl = document.getElementById('specialist-google-btn-text');
+          const subTextEl = document.getElementById('specialist-google-btn-sub');
+          const switchClinicalBtn = document.getElementById('switch-clinical-role-btn');
+
+          if (isHcWorker) {
+            if (iconEl) iconEl.textContent = '🩺';
+            if (badgeEl) badgeEl.textContent = 'Healthcare Worker & Clinical Support Portal';
+            if (hubLabelEl) hubLabelEl.textContent = 'Clinical Monitoring';
+            if (headingEl) headingEl.textContent = 'Patient Monitoring & Cognitive Trajectory Hub';
+            if (descEl) descEl.textContent = 'Monitor patient cognitive activity trajectories, review adherence trends, and collaborate on care workflows.';
+            if (btnTextEl) btnTextEl.textContent = 'Sign In as Healthcare Worker';
+            if (subTextEl) subTextEl.textContent = '🩺 Authorized community / clinical monitoring access';
+            if (switchClinicalBtn) {
+              switchClinicalBtn.textContent = 'Doctor/Specialist View →';
+              switchClinicalBtn.dataset.target = 'medical_specialist';
+            }
+          } else {
+            if (iconEl) iconEl.textContent = '👨‍⚕️';
+            if (badgeEl) badgeEl.textContent = 'Medical Specialist & Clinician Portal';
+            if (hubLabelEl) hubLabelEl.textContent = 'Clinical Hub';
+            if (headingEl) headingEl.textContent = 'Clinical Care & Prescription Hub';
+            if (descEl) descEl.textContent = 'Monitor patient medication adherence, review caregiver symptom reports, adjust prescriptions with audit trails, and evaluate cognitive game performance trends.';
+            if (btnTextEl) btnTextEl.textContent = 'Sign In as Medical Specialist';
+            if (subTextEl) subTextEl.textContent = '🛡️ Requires active medical license / registration verification';
+            if (switchClinicalBtn) {
+              switchClinicalBtn.textContent = 'Healthcare Worker View →';
+              switchClinicalBtn.dataset.target = 'healthcare_worker';
+            }
+          }
         } else {
           caretakerCard.classList.remove('hidden');
         }
@@ -352,7 +400,37 @@
 
         try {
           localStorage.setItem('smriti_intended_role', role);
-          const user = await window.smritiAuth.signInWithGoogle(role);
+          let user = null;
+          try {
+            user = await window.smritiAuth.signInWithGoogle(role);
+          } catch (oauthErr) {
+            const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalDev && window.ApiClient) {
+              console.log('[AuthPage] Using legitimate dev OAuth fallback for local development with role:', role);
+              let devUser;
+              if (role === 'caretaker') {
+                devUser = { id: 'caretaker_dev_aryan', name: 'Aryan Caretaker', email: 'aryan.dev@example.com' };
+              } else if (role === 'healthcare_worker') {
+                devUser = { id: 'hc_dev_hrithik', name: 'Hrithik Healthcare Worker', email: 'hrithik.hc@example.com' };
+              } else if (role === 'medical_specialist') {
+                devUser = { id: 'spec_dev_doctor', name: 'Dr. Specialist', email: 'doctor.specialist@example.com' };
+              } else {
+                devUser = { id: 'elderly_dev_senior', name: 'Sruti Baba', email: 'sruti.dev@example.com' };
+              }
+              const devRes = await window.ApiClient.loginWithGoogle({
+                oauthUser: devUser,
+                intendedRole: role
+              });
+              if (devRes?.success && devRes?.user) {
+                user = devRes.user;
+              } else {
+                throw oauthErr;
+              }
+            } else {
+              throw oauthErr;
+            }
+          }
+
           if (!user) {
             // Redirect authentication in progress
             return;
@@ -385,7 +463,7 @@
 
       if (elderlyBtn) elderlyBtn.addEventListener('click', () => handleGoogleLogin('elderly_user'));
       if (caretakerBtn) caretakerBtn.addEventListener('click', () => handleGoogleLogin('caretaker'));
-      if (specialistBtn) specialistBtn.addEventListener('click', () => handleGoogleLogin('medical_specialist'));
+      if (specialistBtn) specialistBtn.addEventListener('click', () => handleGoogleLogin(currentRole === 'healthcare_worker' ? 'healthcare_worker' : 'medical_specialist'));
     });
   </script>
 </body>

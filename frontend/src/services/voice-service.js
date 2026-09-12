@@ -32,6 +32,10 @@ class VoiceService {
     }
   }
 
+  get isSpeechRecognitionSupported() {
+    return this.isRecognitionSupported;
+  }
+
   loadVoices() {
     if (!this.synth) return;
     this.voices = this.synth.getVoices();

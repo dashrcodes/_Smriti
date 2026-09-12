@@ -46,6 +46,10 @@
       "destination": "/frontend/src/pages/caretaker-studio.html"
     },
     {
+      "source": "/specialist-dashboard",
+      "destination": "/frontend/src/pages/specialist-dashboard.html"
+    },
+    {
       "source": "/auth",
       "destination": "/frontend/src/auth/auth.html"
     },

@@ -7,7 +7,7 @@
 
 import { firestoreDb, isFirebaseLive } from '../config/firebase-admin.js';
 import { isProduction, shouldUseLocalFallback } from '../config/env.js';
-import { createUserModel } from '../models/user.model.js';
+import { createUserModel, normalizeRole, VALID_ROLES } from '../models/user.model.js';
 import { logger } from '../utils/logger.js';
 import fs from 'fs';
 import path from 'path';
@@ -158,12 +158,22 @@ export const userService = {
 
     if (existing) {
       logger.info('[AUTH_DIAGNOSTIC] stage=USER_CREATION_UPDATE_STARTED', { isNewUser: false });
+
+      let assignedRole = existing.role;
+      if (intendedRole) {
+        const normalized = normalizeRole(intendedRole);
+        if (VALID_ROLES.includes(normalized)) {
+          assignedRole = normalized;
+        }
+      }
+
       const updated = {
         ...existing,
         role: intendedRole || existing.role,
         name: name || existing.name,
         email: email ? email.trim().toLowerCase() : existing.email,
         photoURL: photoURL || existing.photoURL,
+        role: assignedRole,
         metadata: {
           ...existing.metadata,
           lastLogin: new Date().toISOString()
