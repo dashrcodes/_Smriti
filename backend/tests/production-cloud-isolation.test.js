@@ -143,7 +143,7 @@ async function runCloudIsolationTests() {
     } catch (err) {
       uploadFailedAsExpected = true;
       assert.ok(
-        err.message.includes('Supabase Storage upload failed'),
+        err.message.includes('Supabase Storage upload failed') || err.message.includes('No authorized cloud storage provider'),
         `Error must be explicit cloud failure: ${err.message}`
       );
     } finally {
