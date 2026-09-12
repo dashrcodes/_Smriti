@@ -9,7 +9,8 @@
     "start": "node backend/src/server.js",
     "dev": "node --watch backend/src/server.js",
     "dev:backend": "cd backend && npm run dev",
-    "test": "node backend/tests/auth-rbac.test.js && node backend/tests/relationships.test.js && node backend/tests/media.test.js && node backend/tests/phase3-personalization.test.js && node backend/tests/e2e-media-verification.test.js && node backend/tests/phase4-cognitive-engine.test.js && node backend/tests/phase4-5-compliance.test.js && node backend/tests/supabase-storage.test.js && node backend/tests/relationship-production.test.js && node backend/tests/production-cloud-isolation.test.js && node backend/tests/specialist-workflow.test.js"
+    "test:abdm": "node backend/tests/abdm-integration.test.js",
+    "test": "node backend/tests/auth-rbac.test.js && node backend/tests/relationships.test.js && node backend/tests/media.test.js && node backend/tests/phase3-personalization.test.js && node backend/tests/e2e-media-verification.test.js && node backend/tests/phase4-cognitive-engine.test.js && node backend/tests/phase4-5-compliance.test.js && node backend/tests/supabase-storage.test.js && node backend/tests/relationship-production.test.js && node backend/tests/production-cloud-isolation.test.js && node backend/tests/specialist-workflow.test.js && node backend/tests/abdm-integration.test.js"
   },
   "keywords": [
     "smriti",

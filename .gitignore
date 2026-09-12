@@ -22,3 +22,5 @@ yarn-error.log*
 .system_generated/
 backend/data/*.json
 
+
+backend/data/uploads/

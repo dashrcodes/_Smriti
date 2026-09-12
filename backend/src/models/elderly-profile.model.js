@@ -62,6 +62,13 @@ export function createElderlyProfileModel(data = {}) {
       questionsPerSession: data.cognitivePreferences?.questionsPerSession || 5,
       emotionalPromptsEnabled: data.cognitivePreferences?.emotionalPromptsEnabled ?? true
     },
+    abha: {
+      status: data.abha?.status || 'unlinked', // 'unlinked' | 'linked'
+      abhaAddress: data.abha?.abhaAddress || '', // e.g. 'sruti.sharma@abdm'
+      abhaNumber: data.abha?.abhaNumber || '',   // e.g. '91-1234-5678-9012'
+      linkedAt: data.abha?.linkedAt || null,
+      verificationMethod: data.abha?.verificationMethod || 'demo_otp'
+    },
     createdAt: data.createdAt || new Date().toISOString(),
     updatedAt: data.updatedAt || new Date().toISOString()
   };

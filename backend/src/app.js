@@ -25,6 +25,7 @@ import cognitiveRoutes from './routes/cognitive-routes.js';
 import syncRoutes from './routes/sync-routes.js';
 import visionRoutes from './routes/vision-routes.js';
 import specialistRoutes from './routes/specialist-routes.js';
+import abdmRoutes from './routes/abdm-routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,6 +74,7 @@ const mountApiRoutes = (prefix = '/api') => {
   app.use(`${prefix}/sync`, syncRoutes);
   app.use(`${prefix}/vision`, visionRoutes);
   app.use(`${prefix}/specialist`, specialistRoutes);
+  app.use(`${prefix}/abdm`, abdmRoutes);
 };
 
 mountApiRoutes('/api');

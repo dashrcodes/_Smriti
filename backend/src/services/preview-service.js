@@ -33,10 +33,10 @@ export const previewService = {
 
     // 3. Resolve authentic real name (avoiding generic placeholders)
     let realName = '';
-    if (user?.name && user.name !== 'Smriti User' && user.name !== 'Elderly User') {
-      realName = user.name.trim();
-    } else if (profile?.displayName && profile.displayName !== 'Elderly User' && profile.displayName !== 'Smriti User') {
+    if (profile?.displayName && profile.displayName !== 'Elderly User' && profile.displayName !== 'Smriti User') {
       realName = profile.displayName.trim();
+    } else if (user?.name && user.name !== 'Smriti User' && user.name !== 'Elderly User') {
+      realName = user.name.trim();
     } else if (user?.email) {
       const emailPrefix = user.email.split('@')[0];
       realName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
